@@ -13,6 +13,3 @@ services:
     command: --log-dir /app/logs
     env_file:
       - .env
-
-volumes:
-  {} # placeholder
