@@ -1,0 +1,6 @@
+img[src="/logo.png"],
+img[alt="logo"],
+img[alt="徽标"],
+.text-xl.font-medium {
+  display: none !important;
+}
