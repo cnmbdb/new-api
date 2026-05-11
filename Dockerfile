@@ -1,10 +1,7 @@
-FROM calciumion/new-api:latest AS source
-
-FROM alpine:3.19
+FROM calciumion/new-api:latest
 
 RUN apk add --no-cache nginx supervisor
 
-COPY --from=source /new-api /new-api
 COPY overlay/nginx.conf /etc/nginx/nginx.conf
 
 RUN mkdir -p /app/logs /var/log/nginx /run
@@ -14,7 +11,7 @@ nodaemon=true\n\
 logfile=/var/log/supervisord.log\n\
 pidfile=/var/run/supervisord.pid\n\
 [program:new-api]\n\
-command=/new-api --log-dir /app/logs\n\
+command=/new-api --log-dir /app/logs --port 8080\n\
 autostart=true\n\
 autorestart=true\n\
 stderr_logfile=/app/logs/new-api.err.log\n\
