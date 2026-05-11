@@ -4,8 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "${PORT:-3000}:3002"
+    expose:
+      - "3002"
     environment:
       - API_URL=http://127.0.0.1:3000
     env_file:
