@@ -8,15 +8,5 @@ services:
       - REDIS_CONN_STRING=redis://${REDISUSER}:${REDIS_PASSWORD}@${REDISHOST}:${REDISPORT}/0
     env_file:
       - .env
+:
 
-  overlay-proxy:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "${PORT:-3000}:3002"
-    depends_on:
-      - new-api
-    env_file:
-      - .env
