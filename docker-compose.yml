@@ -2,11 +2,5 @@ services:
   new-api:
     image: calciumion/new-api:latest
     restart: always
-    command: --log-dir /app/logs
-    environment:
-      - SQL_DSN=postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}
-      - REDIS_CONN_STRING=redis://${REDISUSER}:${REDIS_PASSWORD}@${REDISHOST}:${REDISPORT}/0
-    env_file:
-      - .env
-:
-
+    ports:
+      - "3000:3000"
