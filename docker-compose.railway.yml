@@ -1,0 +1,21 @@
+services:
+  overlay-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3002"
+    environment:
+      - API_URL=http://127.0.0.1:3000
+    env_file:
+      - .env
+
+  new-api:
+    image: calciumion/new-api:latest
+    restart: always
+    command: --log-dir /app/logs
+    expose:
+      - "3000"
+    env_file:
+      - .env
