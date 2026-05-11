@@ -1,7 +1,10 @@
-FROM calciumion/new-api:latest
+FROM calciumion/new-api:latest AS source
 
-RUN apk add --no-cache nginx supervisor
+FROM nginx:alpine
 
+RUN apk add --no-cache supervisor
+
+COPY --from=source /new-api /new-api
 COPY overlay/nginx.conf /etc/nginx/nginx.conf
 
 RUN mkdir -p /app/logs /var/log/nginx /run
