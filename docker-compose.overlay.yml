@@ -1,10 +1,7 @@
 services:
   overlay-proxy:
     image: nginx:alpine
-    container_name: new-api-overlay-proxy
     restart: unless-stopped
-    ports:
-      - "3002:3002"
     volumes:
       - ./overlay/nginx.conf:/etc/nginx/nginx.conf:ro
     extra_hosts:
