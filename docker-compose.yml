@@ -1,8 +1,19 @@
 services:
   new-api:
-    image: calciumion/new-api:latest
+    image: ghcr.io/cnmbdb/new-api:latest
     restart: always
     ports:
       - "3000:3000"
-    volumes:
-      - .:/app
+    environment:
+      - SQL_DSN=postgresql://root:123456@postgres:5432/new-api
+      - REDIS_CONN_STRING=redis://:123456@redis:6379
+      - BATCH_UPDATE_ENABLED=true
+      - ERROR_LOG_ENABLED=true
+      - SESSION_SECRET=local-dev-session-secret-key
+    networks:
+      - new-api-network
+
+networks:
+  new-api-network:
+    external: true
+    name: new-api_new-api-network

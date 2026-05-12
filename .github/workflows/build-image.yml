@@ -1,0 +1,70 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache: true
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Build frontend (default)
+        run: |
+          cd web/default
+          bun install
+          bun run build
+        env:
+          VITE_REACT_APP_VERSION: ${{ github.sha }}
+
+      - name: Build frontend (classic)
+        run: |
+          cd web/classic
+          bun install
+          npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Build Go binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
+            -ldflags "-X 'github.com/QuantumNous/new-api/common.Version=${{ github.ref_name }}-${{ github.sha }}' -extldflags '-static'" \
+            -o new-api .
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.ci
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          build-args: |
+            BUILDKIT_CONTEXT_KEEP_GIT_DIR=1

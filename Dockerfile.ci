@@ -1,0 +1,13 @@
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates tzdata
+
+WORKDIR /app
+COPY new-api .
+COPY data ./data
+COPY web/default/dist ./web/default/dist
+COPY web/classic/dist ./web/classic/dist
+
+EXPOSE 3000
+
+CMD ["./new-api"]

@@ -64,7 +64,6 @@ export default defineConfig(({ envMode }) => {
       template: './index.html',
     },
     server: {
-      host: '0.0.0.0',
       proxy: devProxy,
     },
     output: {
