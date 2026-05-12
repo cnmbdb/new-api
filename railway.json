@@ -1,6 +1,7 @@
 {
   "projectId": "bef37af5-8ac9-48df-9d9f-9670bde45072",
   "build": {
-    "builder": "DOCKERFILE"
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile"
   }
 }
