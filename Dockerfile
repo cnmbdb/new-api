@@ -4,19 +4,16 @@ RUN apk add --no-cache nodejs npm git
 
 WORKDIR /app
 
+COPY web/default/package.json web/default/bun.lock web/default/.npmrc /app/web/default/
 WORKDIR /app/web/default
-COPY web/default/package.json web/default/.npmrc ./
 RUN npm install --legacy-peer-deps
 COPY web/default/ ./
 RUN npm run build
 
-WORKDIR /app/web/classic
-COPY web/classic/package.json ./
-RUN npm install --legacy-peer-deps
-COPY web/classic/ ./
-RUN npm run build
-
 WORKDIR /app
+RUN mkdir -p web/classic/dist && \
+    echo '<!doctype html><html><head><title>New API</title></head><body><div id="root"></div></body></html>' > web/classic/dist/index.html
+
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .

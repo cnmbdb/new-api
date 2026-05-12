@@ -9,11 +9,45 @@ services:
       - REDIS_CONN_STRING=redis://:123456@redis:6379
       - BATCH_UPDATE_ENABLED=true
       - ERROR_LOG_ENABLED=true
-      - SESSION_SECRET=local-prod-session-secret
+      - SESSION_SECRET=local-prod-secret-key-2026
+    depends_on:
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     networks:
-      - new-api-network
+      - new-api-net
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --requirepass 123456
+    volumes:
+      - redis_data:/data
+    networks:
+      - new-api-net
+
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: new-api
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - new-api-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d new-api"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  redis_data:
+  pg_data:
 
 networks:
-  new-api-network:
-    external: true
-    name: new-api_new-api-network
+  new-api-net:
+    driver: bridge
