@@ -2,21 +2,25 @@ FROM golang:1.25-alpine AS builder
 
 RUN apk add --no-cache nodejs npm git
 
+ENV GOPROXY=direct
+ENV GO111MODULE=on
+
 WORKDIR /app
 
-COPY web/default/package.json web/default/bun.lock web/default/.npmrc /app/web/default/
+COPY web/default/package.json web/default/.npmrc web/default/
 WORKDIR /app/web/default
 RUN npm install --legacy-peer-deps
 COPY web/default/ ./
 RUN npm run build
 
 WORKDIR /app
-RUN mkdir -p web/classic/dist && \
-    echo '<!doctype html><html><head><title>New API</title></head><body><div id="root"></div></body></html>' > web/classic/dist/index.html
-
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
+
+RUN mkdir -p web/classic/dist && \
+    echo '<!doctype html><html><head><title></title></head><body></body></html>' > web/classic/dist/index.html
+
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o new-api .
 
 FROM scratch

@@ -1,6 +1,6 @@
 services:
   new-api:
-    image: new-api:local
+    image: ghcr.io/cnmbdb/new-api:latest
     restart: always
     ports:
       - "3000:3000"
