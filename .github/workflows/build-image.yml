@@ -3,6 +3,10 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "*.md"
+      - "LICENSE"
+      - ".gitignore"
   workflow_dispatch:
 
 env:
@@ -15,50 +19,19 @@ jobs:
     permissions:
       contents: read
       packages: write
-
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.25"
-          cache: true
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Build frontend (default)
-        run: |
-          cd web/default
-          bun install
-          bun run build
-        env:
-          VITE_REACT_APP_VERSION: ${{ github.sha }}
-
-      - name: Build frontend (classic)
-        run: |
-          cd web/classic
-          bun install
-          npm run build
-        env:
-          NODE_OPTIONS: --max-old-space-size=4096
-
-      - name: Build Go binary
-        run: |
-          CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo \
-            -ldflags "-X 'github.com/QuantumNous/new-api/common.Version=${{ github.ref_name }}-${{ github.sha }}' -extldflags '-static'" \
-            -o new-api .
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile.ci
@@ -66,5 +39,5 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          build-args: |
-            BUILDKIT_CONTEXT_KEEP_GIT_DIR=1
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
