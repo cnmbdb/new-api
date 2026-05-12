@@ -6,21 +6,20 @@ COPY web/default/ ./
 RUN bun run build
 
 FROM golang:1.25-alpine AS builder
-RUN apk add --no-cache git
+RUN apk add --no-cache git ca-certificates
 ENV GOPROXY=direct
 ENV GO111MODULE=on
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN mkdir -p web/classic/dist && \
+RUN mkdir -p data web/classic/dist && touch data/.keep && \
     echo '<!doctype html><html><head><title></title></head><body></body></html>' > web/classic/dist/index.html
 COPY --from=build-default /app/web/default/dist ./web/default/dist
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static"' -o new-api .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags '-extldflags "-static" -s -w' -o new-api .
 
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /app/new-api /new-api
 COPY --from=builder /app/data /data
 COPY --from=builder /app/web/default/dist /web/default/dist
