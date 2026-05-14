@@ -3,5 +3,9 @@ logs/
 *.log
 package-lock.json
 .DS_Store
-dist/
+# dist/ is intentionally tracked for go:embed
+web/classic/dist/
 new-api
+.gitnexus
+one-api.db
+tmp/

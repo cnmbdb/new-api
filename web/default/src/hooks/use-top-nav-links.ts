@@ -122,7 +122,7 @@ export function useTopNavLinks(): TopNavLink[] {
 
   // Home
   if (modules?.home !== false) {
-    links.push({ title: t('Home'), href: 'https://tokenapi.txsw.top/', external: true })
+    links.push({ title: t('Home'), href: '/' })
   }
 
   // Console -> /dashboard (new console path)

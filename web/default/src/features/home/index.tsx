@@ -41,20 +41,22 @@ export function Home() {
   }
 
   if (content) {
+    if (isUrl) {
+      return (
+        <iframe
+          src={content}
+          className='h-screen w-full border-none'
+          title={t('Custom Home Page')}
+        />
+      )
+    }
+
     return (
       <PublicLayout showMainContainer={false}>
         <main className='overflow-x-hidden'>
-          {isUrl ? (
-            <iframe
-              src={content}
-              className='h-screen w-full border-none'
-              title={t('Custom Home Page')}
-            />
-          ) : (
-            <div className='container mx-auto py-8'>
-              <Markdown className='custom-home-content'>{content}</Markdown>
-            </div>
-          )}
+          <div className='container mx-auto py-8'>
+            <Markdown className='custom-home-content'>{content}</Markdown>
+          </div>
         </main>
       </PublicLayout>
     )
