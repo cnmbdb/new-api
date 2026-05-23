@@ -29,5 +29,5 @@ COPY --from=builder /app/web/default/dist /web/default/dist
 COPY --from=builder /app/web/classic/dist /web/classic/dist
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD /bin/busybox wget -q -O- http://localhost:3000/health || exit 1
+    CMD /bin/busybox wget -q -O- http://localhost:3000/api/status || exit 1
 ENTRYPOINT ["/new-api"]
