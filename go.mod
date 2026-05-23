@@ -49,7 +49,7 @@ require (
 	github.com/waffo-com/waffo-go v1.3.1
 	github.com/yapingcat/gomedia v0.0.0-20240906162731-17feea57090c
 	golang.org/x/crypto v0.45.0
-	golang.org/x/image v0.38.0
+	golang.org/x/image v0.17.0
 	golang.org/x/net v0.47.0
 	golang.org/x/sync v0.20.0
 	golang.org/x/sys v0.38.0
