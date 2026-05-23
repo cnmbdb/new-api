@@ -1,7 +1,7 @@
 FROM oven/bun:1.1.0 AS build-default
 WORKDIR /app/web/default
 COPY web/default/package.json web/default/bun.lock web/default/.npmrc ./
-RUN bun install --frozen-lockfile
+RUN bun install
 COPY web/default/ ./
 RUN bun run build
 
