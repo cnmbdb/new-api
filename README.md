@@ -25,7 +25,7 @@
     <img src="https://img.shields.io/badge/docker-dockerHub-blue" alt="docker">
   </a><!--
   --><a href="https://goreportcard.com/report/github.com/Calcium-Ion/new-api">
-    <img src="https://goreportcard.com/badge/github.com/Calcium-Ion/new-api" alt="GoReportCard">
+    <img src="https://img.shields.io/goreportcard/github.com/Calcium-Ion/new-api" alt="GoReportCard">
   </a>
 </p>
 
@@ -57,7 +57,7 @@
 > [!IMPORTANT]
 > - This project is for personal learning purposes only, with no guarantee of stability or technical support
 > - Users must comply with OpenAI's [Terms of Use](https://openai.com/policies/terms-of-use) and **applicable laws and regulations**, and must not use it for illegal purposes
-> - According to the [《Interim Measures for the Management of Generative Artificial Intelligence Services》](http://www.cac.gov.cn/2023-07/13/c_1690898327029107.htm), please do not provide any unregistered generative AI services to the public in China.
+> - According to the [Interim Measures for the Management of Generative Artificial Intelligence Services](http://www.cac.gov.cn/2023-07/13/c_1690898327029107.htm), please do not provide any unregistered generative AI services to the public in China.
 
 ---
 
@@ -191,10 +191,11 @@ docker run --name new-api -d --restart always \
 
 ### 💰 Payment and Billing
 
-- ✅ Online recharge (EPay, Stripe)
+- ✅ Online recharge (EPay, Stripe, Creem, Waffo)
 - ✅ Pay-per-use model pricing
 - ✅ Cache billing support (OpenAI, Azure, DeepSeek, Claude, Qwen and all supported models)
 - ✅ Flexible billing policy configuration
+- ✅ Subscription plans with automatic reset
 
 ### 🔐 Authorization and Security
 
@@ -202,6 +203,7 @@ docker run --name new-api -d --restart always \
 - 🤖 LinuxDO authorization login
 - 📱 Telegram authorization login
 - 🔑 OIDC unified authentication
+- 🔐 Passkey (WebAuthn/FIDO2) secure login
 - 🔍 Key quota query usage (with [neko-api-key-tool](https://github.com/Calcium-Ion/neko-api-key-tool))
 
 ### 🚀 Advanced Features
@@ -210,19 +212,19 @@ docker run --name new-api -d --restart always \
 - ⚡ [OpenAI Responses](https://docs.newapi.pro/en/docs/api/ai-model/chat/openai/create-response)
 - ⚡ [OpenAI Realtime API](https://docs.newapi.pro/en/docs/api/ai-model/realtime/create-realtime-session) (including Azure)
 - ⚡ [Claude Messages](https://docs.newapi.pro/en/docs/api/ai-model/chat/create-message)
-- ⚡ [Google Gemini](https://doc.newapi.pro/en/api/google-gemini-chat)
+- ⚡ [Google Gemini](https://docs.newapi.pro/en/docs/api/ai-model/chat/gemini/geminirelayv1beta)
 - 🔄 [Rerank Models](https://docs.newapi.pro/en/docs/api/ai-model/rerank/create-rerank) (Cohere, Jina)
 
 **Intelligent Routing:**
 - ⚖️ Channel weighted random
 - 🔄 Automatic retry on failure
 - 🚦 User-level model rate limiting
+- 🎯 Channel affinity for consistent routing
 
 **Format Conversion:**
 - 🔄 **OpenAI Compatible ⇄ Claude Messages**
 - 🔄 **OpenAI Compatible → Google Gemini**
 - 🔄 **Google Gemini → OpenAI Compatible** - Text only, function calling not supported yet
-- 🚧 **OpenAI Compatible ⇄ OpenAI Responses** - In development
 - 🔄 **Thinking-to-content functionality**
 
 **Reasoning Effort Support:**
@@ -260,10 +262,10 @@ docker run --name new-api -d --restart always \
 |---------|------|------|
 | 🤖 OpenAI-Compatible | OpenAI compatible models | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/chat/openai/createchatcompletion) |
 | 🤖 OpenAI Responses | OpenAI Responses format | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/chat/openai/createresponse) |
-| 🎨 Midjourney-Proxy | [Midjourney-Proxy(Plus)](https://github.com/novicezk/midjourney-proxy) | [Documentation](https://doc.newapi.pro/api/midjourney-proxy-image) |
-| 🎵 Suno-API | [Suno API](https://github.com/Suno-API/Suno-API) | [Documentation](https://doc.newapi.pro/api/suno-music) |
+| 🎨 Midjourney-Proxy | [Midjourney-Proxy(Plus)](https://github.com/novicezk/midjourney-proxy) | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/image/midjourney) |
+| 🎵 Suno-API | [Suno API](https://github.com/Suno-API/Suno-API) | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/audio/suno) |
 | 🔄 Rerank | Cohere, Jina | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/rerank/creatererank) |
-| 💬 Claude | Messages format | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/chat/createmessage) |
+| 💬 Claude | Messages format | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/chat/create-message) |
 | 🌐 Gemini | Google Gemini format | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/chat/gemini/geminirelayv1beta) |
 | 🔧 Dify | ChatFlow mode | - |
 | 🎯 Custom | Supports complete call address | - |
@@ -275,13 +277,13 @@ docker run --name new-api -d --restart always \
 
 - [Chat Interface (Chat Completions)](https://docs.newapi.pro/en/docs/api/ai-model/chat/openai/createchatcompletion)
 - [Response Interface (Responses)](https://docs.newapi.pro/en/docs/api/ai-model/chat/openai/createresponse)
-- [Image Interface (Image)](https://docs.newapi.pro/en/docs/api/ai-model/images/openai/post-v1-images-generations)
+- [Image Interface (Image Generations)](https://docs.newapi.pro/en/docs/api/ai-model/images/openai/post-v1-images-generations)
 - [Audio Interface (Audio)](https://docs.newapi.pro/en/docs/api/ai-model/audio/openai/create-transcription)
-- [Video Interface (Video)](https://docs.newapi.pro/en/docs/api/ai-model/audio/openai/createspeech)
+- [Video Interface (Video Generations)](https://docs.newapi.pro/en/docs/api/ai-model/audio/openai/createspeech)
 - [Embedding Interface (Embeddings)](https://docs.newapi.pro/en/docs/api/ai-model/embeddings/createembedding)
 - [Rerank Interface (Rerank)](https://docs.newapi.pro/en/docs/api/ai-model/rerank/creatererank)
 - [Realtime Conversation (Realtime)](https://docs.newapi.pro/en/docs/api/ai-model/realtime/createrealtimesession)
-- [Claude Chat](https://docs.newapi.pro/en/docs/api/ai-model/chat/createmessage)
+- [Claude Chat](https://docs.newapi.pro/en/docs/api/ai-model/chat/create-message)
 - [Google Gemini Chat](https://docs.newapi.pro/en/docs/api/ai-model/chat/gemini/geminirelayv1beta)
 
 </details>
@@ -383,7 +385,7 @@ docker run --name new-api -d --restart always \
 2. Search for **New-API** in the application store
 3. One-click installation
 
-📖 [Tutorial with images](./docs/BT.md)
+📖 [Tutorial with images](./docs/installation/BT.md)
 
 </details>
 

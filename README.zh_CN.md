@@ -7,7 +7,7 @@
 🍥 **新一代大模型网关与AI资产管理系统**
 
 <p align="center">
-  简体中文 |
+  <strong>简体中文</strong> |
   <a href="./README.zh_TW.md">繁體中文</a> |
   <a href="./README.md">English</a> |
   <a href="./README.fr.md">Français</a> |
@@ -25,7 +25,7 @@
     <img src="https://img.shields.io/badge/docker-dockerHub-blue" alt="docker">
   </a><!--
   --><a href="https://goreportcard.com/report/github.com/Calcium-Ion/new-api">
-    <img src="https://goreportcard.com/badge/github.com/Calcium-Ion/new-api" alt="GoReportCard">
+    <img src="https://img.shields.io/goreportcard/github.com/Calcium-Ion/new-api" alt="GoReportCard">
   </a>
 </p>
 
@@ -43,21 +43,28 @@
 </p>
 
 <p align="center">
-  <a href="#-快速开始">快速开始</a> •
-  <a href="#-主要特性">主要特性</a> •
-  <a href="#-部署">部署</a> •
-  <a href="#-文档">文档</a> •
-  <a href="#-帮助支持">帮助</a>
+  <a href="#核心功能">核心功能</a> •
+  <a href="#支持的模型">支持的模型</a> •
+  <a href="#快速开始">快速开始</a> •
+  <a href="#部署方式">部署方式</a> •
+  <a href="#配置说明">配置说明</a> •
+  <a href="#相关项目">相关项目</a>
 </p>
 
 </div>
 
-## 📝 项目说明
+---
 
-> [!IMPORTANT]
-> - 本项目仅供个人学习使用，不保证稳定性，且不提供任何技术支持
-> - 使用者必须在遵循 OpenAI 的 [使用条款](https://openai.com/policies/terms-of-use) 以及**法律法规**的情况下使用，不得用于非法用途
-> - 根据 [《生成式人工智能服务管理暂行办法》](http://www.cac.gov.cn/2023-07/13/c_1690898327029107.htm) 的要求，请勿对中国地区公众提供一切未经备案的生成式人工智能服务
+## � 项目简介
+
+New API 是一个基于 Go 语言开发的新一代 AI 大模型网关与资产管理平台。它整合了全球 40+ 主流 AI 服务提供商（包括 OpenAI、Anthropic、Google、Azure、AWS 等），为开发者和企业用户提供统一的 API 接口、完善的用户管理体系以及灵活的计费策略。
+
+### 核心价值
+
+- **统一接入**：通过单一 API 接口访问多个 AI 提供商，降低集成复杂度
+- **成本控制**：支持渠道加权、模型限流、缓存计费等多种成本优化策略
+- **灵活扩展**：支持 SQLite、MySQL、PostgreSQL 多种数据库，可根据规模灵活部署
+- **安全可靠**：支持 JWT、OAuth、Passkey 等多种认证方式，保障系统安全
 
 ---
 
@@ -104,6 +111,117 @@
 
 ---
 
+## � 核心功能
+
+### 🎨 核心特性
+
+| 功能 | 说明 |
+|------|------|
+| 🎨 全新 UI | 采用现代化设计语言，提供简洁美观的操作界面 |
+| 🌍 多语言 | 支持简体中文、繁体中文、英文、法语、日语、越南语、俄语 |
+| 🔄 数据兼容 | 完全兼容 One API 数据库，可平滑迁移现有数据 |
+| 📈 数据看板 | 可视化控制台，实时展示用量统计与收入分析 |
+| 🔒 权限管理 | 令牌分组、模型限制、用户角色等多维度权限控制 |
+
+### 💰 支付与计费
+
+- ✅ **多渠道充值**：支持易支付(EPay)、Stripe、Creem、Waffo 等多种支付方式
+- ✅ **模型按次计费**：支持按请求次数、Token 用量等多维度计费
+- ✅ **缓存计费**：支持 OpenAI、Azure、DeepSeek、Claude、Qwen 等模型的缓存计费
+- ✅ **灵活倍率**：可针对不同渠道、模型、用户组设置独立计费倍率
+- ✅ **订阅套餐**：支持创建订阅套餐，实现自动周期重置与预付费
+- ✅ **阶梯计费**：支持表达式计费，可配置复杂的多阶梯定价策略
+
+### 🔐 授权与安全
+
+- ✅ **多因素认证**：支持 TOTP 两步验证、Passkey (WebAuthn/FIDO2) 安全密钥
+- ✅ **OAuth 登录**：支持 Discord、GitHub、LinuxDO、Telegram 等第三方登录
+- ✅ **OIDC 认证**：支持 OIDC 统一认证，可对接企业身份管理系统
+- ✅ **API Key 管理**：支持批量生成、额度分配、使用追踪等完整生命周期管理
+- ✅ **Key 额度查询**：可配合 [neko-api-key-tool](https://github.com/Calcium-Ion/neko-api-key-tool) 查询各平台 Key 剩余额度
+
+### 🚀 高级功能
+
+#### API 格式支持
+
+| 格式类型 | 说明 | 文档 |
+|---------|------|------|
+| ⚡ OpenAI Chat Completions | 兼容 OpenAI 聊天接口格式 | [查看](https://docs.newapi.pro/zh/docs/api/ai-model/chat/openai/createchatcompletion) |
+| ⚡ OpenAI Responses | OpenAI 最新 Responses API | [查看](https://docs.newapi.pro/zh/docs/api/ai-model/chat/openai/createresponse) |
+| ⚡ OpenAI Realtime | 支持 WebSocket 实时对话（含 Azure）| [查看](https://docs.newapi.pro/zh/docs/api/ai-model/realtime/createrealtimesession) |
+| ⚡ Claude Messages | Anthropic Claude 消息格式 | [查看](https://docs.newapi.pro/zh/docs/api/ai-model/chat/create-message) |
+| ⚡ Google Gemini | Google Gemini 对话格式 | [查看](https://docs.newapi.pro/zh/docs/api/ai-model/chat/gemini/geminirelayv1beta) |
+| 🔄 Rerank | 支持 Cohere、Jina Rerank 模型 | [查看](https://docs.newapi.pro/zh/docs/api/ai-model/rerank/creatererank) |
+
+#### 智能路由
+
+- ⚖️ **渠道加权随机**：根据配置权重自动分配请求到不同渠道
+- 🔄 **失败自动重试**：支持配置失败重试次数，确保请求高可用
+- 🚦 **用户级限流**：可针对不同用户组设置独立的请求频率限制
+- 🎯 **渠道亲和性**：支持基于用户会话的渠道一致性路由
+
+#### 格式转换
+
+- 🔄 **OpenAI ↔ Claude**：自动转换两种格式的请求与响应
+- 🔄 **OpenAI ↔ Gemini**：支持格式双向转换（文本模式）
+- 🔄 **思考转内容**：支持提取模型思考过程并转换为结构化内容
+
+#### Reasoning Effort 支持
+
+<details>
+<summary>查看支持的模型配置</summary>
+
+**OpenAI 系列模型：**
+- `o3-mini-high` / `o3-mini-medium` / `o3-mini-low` - 调整推理强度
+- `gpt-5-high` / `gpt-5-medium` / `gpt-5-low` - 调整推理强度
+
+**Claude 思考模型：**
+- `claude-3-7-sonnet-20250219-thinking` - 启用思考模式
+
+**Google Gemini 系列模型：**
+- `gemini-2.5-flash-thinking` - 启用思考模式
+- `gemini-2.5-flash-nothinking` - 禁用思考模式
+- `gemini-2.5-pro-thinking` - 启用思考模式
+- `gemini-2.5-pro-thinking-128` - 启用思考模式并设置 128 tokens 思考预算
+- 可在模型名后追加 `-low` / `-medium` / `-high` 控制思考力度
+
+</details>
+
+---
+
+## 🤖 支持的模型
+
+> 完整接口文档请访问 [官方文档](https://docs.newapi.pro/zh/docs/api)
+
+### 模型类型
+
+| 模型类型 | 说明 | 示例提供商 |
+|---------|------|-----------|
+| 🤖 OpenAI-Compatible | OpenAI 兼容模型 | OpenAI、Azure、OpenRouter、Ollama 等 |
+| 🤖 OpenAI Responses | OpenAI Responses 格式 | OpenAI 最新 API |
+| 🎨 图像生成 | Midjourney 风格的图像生成 | Midjourney-Proxy、即梦、Kling |
+| 🎵 音乐生成 | Suno 音乐生成 API | Suno |
+| 🔄 Rerank | 文档重排序模型 | Cohere、Jina |
+| 💬 Claude | Anthropic Claude 系列 | Claude (Anthropic) |
+| 🌐 Gemini | Google Gemini 系列 | Gemini (Google) |
+| 🔧 Dify | ChatFlow 模式 | Dify |
+| 🎯 自定义 | 支持完整自定义调用地址 | - |
+
+### 支持的接口
+
+| 接口类型 | 说明 |
+|---------|------|
+| 💬 聊天补全 (Chat Completions) | 标准聊天补全接口 |
+| 📝 响应接口 (Responses) | OpenAI Responses API |
+| 🖼️ 图像生成 (Image Generations) | DALL-E、Midjourney 等 |
+| 🎵 音频处理 (Audio) | 语音转文字、文字转语音 |
+| 🎬 视频生成 (Video) | 视频生成与配音 |
+| 📊 嵌入向量 (Embeddings) | 文本向量化 |
+| 🔄 重排序 (Rerank) | 文档相关性排序 |
+| 🔊 实时对话 (Realtime) | WebSocket 实时语音交互 |
+
+---
+
 ## 🚀 快速开始
 
 ### 使用 Docker Compose（推荐）
@@ -113,7 +231,7 @@
 git clone https://github.com/QuantumNous/new-api.git
 cd new-api
 
-# 编辑 docker-compose.yml 配置
+# 编辑 docker-compose.yml 配置数据库和存储
 nano docker-compose.yml
 
 # 启动服务
@@ -121,7 +239,7 @@ docker-compose up -d
 ```
 
 <details>
-<summary><strong>使用 Docker 命令</strong></summary>
+<summary><strong>使用 Docker 命令行</strong></summary>
 
 ```bash
 # 拉取最新镜像
@@ -141,15 +259,23 @@ docker run --name new-api -d --restart always \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
   calciumion/new-api:latest
+
+# 使用 PostgreSQL
+docker run --name new-api -d --restart always \
+  -p 3000:3000 \
+  -e SQL_DSN="postgres:123456@tcp(localhost:5432)/oneapi?charset=utf8&parseTime=True&loc=Local" \
+  -e TZ=Asia/Shanghai \
+  -v ./data:/data \
+  calciumion/new-api:latest
 ```
 
-> **💡 提示：** `-v ./data:/data` 会将数据保存在当前目录的 `data` 文件夹中，你也可以改为绝对路径如 `-v /your/custom/path:/data`
+> **💡 提示：** `-v ./data:/data` 会将数据保存在当前目录的 `data` 文件夹中
 
 </details>
 
 ---
 
-🎉 部署完成后，访问 `http://localhost:3000` 即可使用！
+🎉 部署完成后，访问 `http://localhost:3000` 即可开始使用！
 
 📖 更多部署方式请参考 [部署指南](https://docs.newapi.pro/zh/docs/installation)
 
@@ -175,120 +301,7 @@ docker run --name new-api -d --restart always \
 
 ---
 
-## ✨ 主要特性
-
-> 详细特性请参考 [特性说明](https://docs.newapi.pro/zh/docs/guide/wiki/basic-concepts/features-introduction)
-
-### 🎨 核心功能
-
-| 特性 | 说明 |
-|------|------|
-| 🎨 全新 UI | 现代化的用户界面设计 |
-| 🌍 多语言 | 支持中文、英文、法语、日语 |
-| 🔄 数据兼容 | 完全兼容原版 One API 数据库 |
-| 📈 数据看板 | 可视化控制台与统计分析 |
-| 🔒 权限管理 | 令牌分组、模型限制、用户管理 |
-
-### 💰 支付与计费
-
-- ✅ 在线充值（易支付、Stripe）
-- ✅ 模型按次数收费
-- ✅ 缓存计费支持（OpenAI、Azure、DeepSeek、Claude、Qwen等所有支持的模型）
-- ✅ 灵活的计费策略配置
-
-### 🔐 授权与安全
-
-- 😈 Discord 授权登录
-- 🤖 LinuxDO 授权登录
-- 📱 Telegram 授权登录
-- 🔑 OIDC 统一认证
-- 🔍 Key 查询使用额度（配合 [neko-api-key-tool](https://github.com/Calcium-Ion/neko-api-key-tool)）
-
-### 🚀 高级功能
-
-**API 格式支持：**
-- ⚡ [OpenAI Responses](https://docs.newapi.pro/zh/docs/api/ai-model/chat/openai/create-response)
-- ⚡ [OpenAI Realtime API](https://docs.newapi.pro/zh/docs/api/ai-model/realtime/create-realtime-session)（含 Azure）
-- ⚡ [Claude Messages](https://docs.newapi.pro/zh/docs/api/ai-model/chat/create-message)
-- ⚡ [Google Gemini](https://doc.newapi.pro/api/google-gemini-chat)
-- 🔄 [Rerank 模型](https://docs.newapi.pro/zh/docs/api/ai-model/rerank/create-rerank)（Cohere、Jina）
-
-**智能路由：**
-- ⚖️ 渠道加权随机
-- 🔄 失败自动重试
-- 🚦 用户级别模型限流
-
-**格式转换：**
-- 🔄 **OpenAI Compatible ⇄ Claude Messages**
-- 🔄 **OpenAI Compatible → Google Gemini**
-- 🔄 **Google Gemini → OpenAI Compatible** - 仅支持文本，暂不支持函数调用
-- 🚧 **OpenAI Compatible ⇄ OpenAI Responses** - 开发中
-- 🔄 **思考转内容功能**
-
-**Reasoning Effort 支持：**
-
-<details>
-<summary>查看详细配置</summary>
-
-**OpenAI 系列模型：**
-- `o3-mini-high` - High reasoning effort
-- `o3-mini-medium` - Medium reasoning effort
-- `o3-mini-low` - Low reasoning effort
-- `gpt-5-high` - High reasoning effort
-- `gpt-5-medium` - Medium reasoning effort
-- `gpt-5-low` - Low reasoning effort
-
-**Claude 思考模型：**
-- `claude-3-7-sonnet-20250219-thinking` - 启用思考模式
-
-**Google Gemini 系列模型：**
-- `gemini-2.5-flash-thinking` - 启用思考模式
-- `gemini-2.5-flash-nothinking` - 禁用思考模式
-- `gemini-2.5-pro-thinking` - 启用思考模式
-- `gemini-2.5-pro-thinking-128` - 启用思考模式，并设置思考预算为128tokens
-- 也可以直接在 Gemini 模型名称后追加 `-low` / `-medium` / `-high` 来控制思考力度（无需再设置思考预算后缀）
-
-</details>
-
----
-
-## 🤖 模型支持
-
-> 详情请参考 [接口文档 - 中继接口](https://docs.newapi.pro/zh/docs/api)
-
-| 模型类型 | 说明 | 文档 |
-|---------|------|------|
-| 🤖 OpenAI-Compatible | OpenAI 兼容模型 | [文档](https://docs.newapi.pro/zh/docs/api/ai-model/chat/openai/createchatcompletion) |
-| 🤖 OpenAI Responses | OpenAI Responses 格式 | [文档](https://docs.newapi.pro/zh/docs/api/ai-model/chat/openai/createresponse) |
-| 🎨 Midjourney-Proxy | [Midjourney-Proxy(Plus)](https://github.com/novicezk/midjourney-proxy) | [文档](https://doc.newapi.pro/api/midjourney-proxy-image) |
-| 🎵 Suno-API | [Suno API](https://github.com/Suno-API/Suno-API) | [文档](https://doc.newapi.pro/api/suno-music) |
-| 🔄 Rerank | Cohere、Jina | [文档](https://docs.newapi.pro/zh/docs/api/ai-model/rerank/create-rerank) |
-| 💬 Claude | Messages 格式 | [文档](https://docs.newapi.pro/zh/docs/api/ai-model/chat/createmessage) |
-| 🌐 Gemini | Google Gemini 格式 | [文档](https://docs.newapi.pro/zh/docs/api/ai-model/chat/gemini/geminirelayv1beta) |
-| 🔧 Dify | ChatFlow 模式 | - |
-| 🎯 自定义 | 支持完整调用地址 | - |
-
-### 📡 支持的接口
-
-<details>
-<summary>查看完整接口列表</summary>
-
-- [聊天接口 (Chat Completions)](https://docs.newapi.pro/zh/docs/api/ai-model/chat/openai/createchatcompletion)
-- [响应接口 (Responses)](https://docs.newapi.pro/zh/docs/api/ai-model/chat/openai/createresponse)
-- [图像接口 (Image)](https://docs.newapi.pro/zh/docs/api/ai-model/images/openai/post-v1-images-generations)
-- [音频接口 (Audio)](https://docs.newapi.pro/zh/docs/api/ai-model/audio/openai/create-transcription)
-- [视频接口 (Video)](https://docs.newapi.pro/zh/docs/api/ai-model/audio/openai/createspeech)
-- [嵌入接口 (Embeddings)](https://docs.newapi.pro/zh/docs/api/ai-model/embeddings/createembedding)
-- [重排序接口 (Rerank)](https://docs.newapi.pro/zh/docs/api/ai-model/rerank/creatererank)
-- [实时对话 (Realtime)](https://docs.newapi.pro/zh/docs/api/ai-model/realtime/createrealtimesession)
-- [Claude 聊天](https://docs.newapi.pro/zh/docs/api/ai-model/chat/createmessage)
-- [Google Gemini 聊天](https://docs.newapi.pro/zh/docs/api/ai-model/chat/gemini/geminirelayv1beta)
-
-</details>
-
----
-
-## 🚢 部署
+## � 部署方式
 
 > [!TIP]
 > **最新版 Docker 镜像：** `calciumion/new-api:latest`
@@ -306,30 +319,32 @@ docker run --name new-api -d --restart always \
 <details>
 <summary>常用环境变量配置</summary>
 
-| 变量名 | 说明                                                           | 默认值 |
-|--------|--------------------------------------------------------------|--------|
-| `SESSION_SECRET` | 会话密钥（多机部署必须）                                                 | - |
-| `CRYPTO_SECRET` | 加密密钥（Redis 必须）                                               | - |
-| `SQL_DSN` | 数据库连接字符串                                                     | - |
-| `REDIS_CONN_STRING` | Redis 连接字符串                                                  | - |
-| `STREAMING_TIMEOUT` | 流式超时时间（秒）                                                    | `300` |
-| `STREAM_SCANNER_MAX_BUFFER_MB` | 流式扫描器单行最大缓冲（MB），图像生成等超大 `data:` 片段（如 4K 图片 base64）需适当调大 | `64` |
-| `MAX_REQUEST_BODY_MB` | 请求体最大大小（MB，**解压后**计；防止超大请求/zip bomb 导致内存暴涨），超过将返回 `413` | `32` |
-| `AZURE_DEFAULT_API_VERSION` | Azure API 版本                                                 | `2025-04-01-preview` |
-| `ERROR_LOG_ENABLED` | 错误日志开关                                                       | `false` |
-| `PYROSCOPE_URL` | Pyroscope 服务地址                                            | - |
-| `PYROSCOPE_APP_NAME` | Pyroscope 应用名                                        | `new-api` |
-| `PYROSCOPE_BASIC_AUTH_USER` | Pyroscope Basic Auth 用户名                        | - |
-| `PYROSCOPE_BASIC_AUTH_PASSWORD` | Pyroscope Basic Auth 密码                  | - |
-| `PYROSCOPE_MUTEX_RATE` | Pyroscope mutex 采样率                               | `5` |
-| `PYROSCOPE_BLOCK_RATE` | Pyroscope block 采样率                               | `5` |
-| `HOSTNAME` | Pyroscope 标签里的主机名                                          | `new-api` |
+| 变量名 | 说明 | 默认值 |
+|--------|------|--------|
+| `SESSION_SECRET` | 会话密钥（多机部署必须）| - |
+| `CRYPTO_SECRET` | 加密密钥（Redis 必须）| - |
+| `SQL_DSN` | 数据库连接字符串 | - |
+| `REDIS_CONN_STRING` | Redis 连接字符串 | - |
+| `STREAMING_TIMEOUT` | 流式超时时间（秒）| `300` |
+| `STREAM_SCANNER_MAX_BUFFER_MB` | 流式扫描器单行最大缓冲（MB）| `64` |
+| `MAX_REQUEST_BODY_MB` | 请求体最大大小（MB，解压后）| `32` |
+| `AZURE_DEFAULT_API_VERSION` | Azure API 版本 | `2025-04-01-preview` |
+| `ERROR_LOG_ENABLED` | 错误日志开关 | `false` |
+| `PYROSCOPE_URL` | Pyroscope 服务地址 | - |
+| `PYROSCOPE_APP_NAME` | Pyroscope 应用名 | `new-api` |
 
 📖 **完整配置：** [环境变量文档](https://docs.newapi.pro/zh/docs/installation/config-maintenance/environment-variables)
 
 </details>
 
-### 🔧 部署方式
+### 🔧 部署方式对比
+
+| 方式 | 适用场景 | 难度 |
+|------|---------|------|
+| Docker Compose | 生产环境，推荐 | ⭐⭐ |
+| Docker 命令 | 快速体验 | ⭐ |
+| 宝塔面板 | 习惯可视化操作 | ⭐ |
+| 源码编译 | 自定义开发 | ⭐⭐⭐ |
 
 <details>
 <summary><strong>方式 1：Docker Compose（推荐）</strong></summary>
@@ -429,7 +444,7 @@ docker run --name new-api -d --restart always \
 |------|------|
 | 📘 常见问题 | [FAQ](https://docs.newapi.pro/zh/docs/support/faq) |
 | 💬 社区交流 | [交流渠道](https://docs.newapi.pro/zh/docs/support/community-interaction) |
-| 🐛 反馈问题 | [问题反馈](https://docs.newapi.pro/zh/docs/support/feedback-issues) |
+| 🐛 问题反馈 | [问题反馈](https://docs.newapi.pro/zh/docs/support/feedback-issues) |
 | 📚 完整文档 | [官方文档](https://docs.newapi.pro/zh/docs) |
 
 ### 🤝 贡献指南
@@ -446,6 +461,10 @@ docker run --name new-api -d --restart always \
 ## 📜 许可证
 
 本项目采用 [GNU Affero 通用公共许可证 v3.0 (AGPLv3)](./LICENSE) 授权。
+
+根据 AGPLv3 第 7 条的附加条款，修改后的版本必须在适当的法律声明以及用户界面中显示的任何关于、合法、页脚或归属位置保留作者署名声明 `Frontend design and development by New API contributors.`。
+
+展示用户界面的修改版本还必须保留指向原始项目的可见链接：<https://github.com/QuantumNous/new-api>。
 
 本项目为开源项目，在 [One API](https://github.com/songquanpeng/one-api)（MIT 许可证）的基础上进行二次开发。
 
