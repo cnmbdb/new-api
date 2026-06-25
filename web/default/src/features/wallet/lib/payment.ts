@@ -28,21 +28,6 @@ import type { PresetAmount, TopupInfo } from '../types'
 // Payment Processing Functions
 // ============================================================================
 
-export interface EmbeddedPaymentRequest {
-  url: string
-  params: Record<string, unknown>
-}
-
-/**
- * Check if browser is Safari
- */
-function isSafariBrowser(): boolean {
-  return (
-    navigator.userAgent.indexOf('Safari') > -1 &&
-    navigator.userAgent.indexOf('Chrome') < 1
-  )
-}
-
 /**
  * Submit payment form (for non-Stripe payments)
  */
@@ -57,8 +42,6 @@ export function submitPaymentForm(
 
   if (target) {
     form.target = target
-  } else if (!isSafariBrowser()) {
-    form.target = '_blank'
   }
 
   // Add form parameters
