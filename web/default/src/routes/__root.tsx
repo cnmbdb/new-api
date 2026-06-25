@@ -27,6 +27,7 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { ThemeCustomizationProvider } from '@/context/theme-customization-provider'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { Toaster } from '@/components/ui/sonner'
+import { FooterScriptInjector } from '@/components/layout/components/footer-script-injector'
 import { NavigationProgress } from '@/components/navigation-progress'
 import { GeneralError } from '@/features/errors/general-error'
 import { NotFoundError } from '@/features/errors/not-found-error'
@@ -39,6 +40,7 @@ function RootComponent() {
   return (
     <ThemeCustomizationProvider>
       <NavigationProgress />
+      <FooterScriptInjector />
       <Outlet />
       <Toaster duration={5000} />
       {import.meta.env.MODE === 'development' && (
