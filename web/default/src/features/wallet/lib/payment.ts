@@ -28,6 +28,11 @@ import type { PresetAmount, TopupInfo } from '../types'
 // Payment Processing Functions
 // ============================================================================
 
+export interface EmbeddedPaymentRequest {
+  url: string
+  params: Record<string, unknown>
+}
+
 /**
  * Check if browser is Safari
  */
@@ -43,14 +48,16 @@ function isSafariBrowser(): boolean {
  */
 export function submitPaymentForm(
   url: string,
-  params: Record<string, unknown>
+  params: Record<string, unknown>,
+  target?: string
 ): void {
   const form = document.createElement('form')
   form.action = url
   form.method = 'POST'
 
-  // Don't open in new tab for Safari
-  if (!isSafariBrowser()) {
+  if (target) {
+    form.target = target
+  } else if (!isSafariBrowser()) {
     form.target = '_blank'
   }
 

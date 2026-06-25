@@ -30,7 +30,7 @@ import {
 import {
   isStripePayment,
   isWaffoPancakePayment,
-  submitPaymentForm,
+  type EmbeddedPaymentRequest,
 } from '../lib'
 
 // ============================================================================
@@ -41,6 +41,8 @@ export function usePayment() {
   const [amount, setAmount] = useState<number>(0)
   const [calculating, setCalculating] = useState(false)
   const [processing, setProcessing] = useState(false)
+  const [embeddedPayment, setEmbeddedPayment] =
+    useState<EmbeddedPaymentRequest | null>(null)
 
   // Calculate payment amount
   const calculatePaymentAmount = useCallback(
@@ -110,8 +112,8 @@ export function usePayment() {
         if (!isStripe && response.data) {
           const url = (response as unknown as { url?: string }).url
           if (url) {
-            submitPaymentForm(url, response.data)
-            toast.success(i18next.t('Redirecting to payment page...'))
+            setEmbeddedPayment({ url, params: response.data })
+            toast.success(i18next.t('Payment page opened'))
             return true
           }
         }
@@ -133,6 +135,8 @@ export function usePayment() {
     processing,
     calculatePaymentAmount,
     processPayment,
+    embeddedPayment,
+    setEmbeddedPayment,
     setAmount,
   }
 }
