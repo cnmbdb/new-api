@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ExternalLink, Loader2, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
@@ -36,23 +36,96 @@ interface EmbeddedPaymentDialogProps {
   payment: EmbeddedPaymentRequest | null
 }
 
+function escapeHtml(value: unknown): string {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function createPaymentDocument(payment: EmbeddedPaymentRequest): string {
+  const inputs = Object.entries(payment.params)
+    .map(
+      ([key, value]) =>
+        `<input type="hidden" name="${escapeHtml(key)}" value="${escapeHtml(value)}" />`
+    )
+    .join('')
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <style>
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: #ffffff;
+        color: #111827;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      body {
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      form {
+        display: grid;
+        gap: 12px;
+        width: min(100%, 320px);
+        text-align: center;
+      }
+      button {
+        appearance: none;
+        border: 0;
+        border-radius: 10px;
+        background: #111827;
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        padding: 12px 16px;
+      }
+      p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="payment-form" method="post" action="${escapeHtml(payment.url)}">
+      ${inputs}
+      <p>正在打开支付页面...</p>
+      <button type="submit">继续支付</button>
+    </form>
+    <script>
+      window.setTimeout(function () {
+        document.getElementById('payment-form').submit();
+      }, 80);
+    </script>
+  </body>
+</html>`
+}
+
 export function EmbeddedPaymentDialog({
   open,
   onOpenChange,
   payment,
 }: EmbeddedPaymentDialogProps) {
   const { t } = useTranslation()
-  const reactId = useId()
-  const frameName = useMemo(
-    () => `embedded-payment-${reactId.replace(/[^a-zA-Z0-9_-]/g, '')}`,
-    [reactId]
-  )
   const [loading, setLoading] = useState(false)
+  const [paymentDocument, setPaymentDocument] = useState('')
 
   const submitToFrame = () => {
     if (!payment) return
     setLoading(true)
-    submitPaymentForm(payment.url, payment.params, frameName)
+    setPaymentDocument(
+      `${createPaymentDocument(payment)}\n<!-- ${Date.now()} -->`
+    )
   }
 
   useEffect(() => {
@@ -88,11 +161,10 @@ export function EmbeddedPaymentDialog({
             </div>
           )}
           <iframe
-            name={frameName}
             title={t('Payment')}
             className='h-full min-h-[520px] w-full border-0'
             onLoad={() => setLoading(false)}
-            sandbox='allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox'
+            srcDoc={paymentDocument}
           />
         </div>
 
