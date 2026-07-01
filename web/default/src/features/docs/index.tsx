@@ -265,7 +265,7 @@ export function Docs() {
   return (
     <PublicLayout showMainContainer={false}>
       <div className='bg-background min-h-[calc(100vh-3.5rem)]'>
-        <div className='mx-auto grid w-full max-w-[1500px] grid-cols-1 gap-6 px-4 py-6 md:px-6 lg:grid-cols-[220px_minmax(0,1fr)_240px] xl:grid-cols-[240px_minmax(0,1fr)_260px]'>
+        <div className='mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-8 px-4 py-6 md:px-6 lg:grid-cols-[240px_minmax(0,1fr)]'>
           <aside className='hidden lg:block'>
             <nav className='sticky top-20 space-y-1'>
               <p className='text-muted-foreground mb-3 px-3 text-xs font-medium'>
@@ -790,34 +790,6 @@ Protocol: OpenAI Compatible 或按客户端要求选择自定义兼容协议`}
               </Section>
             </article>
           </main>
-
-          <aside className='hidden lg:block'>
-            <div className='sticky top-20'>
-              <p className='text-muted-foreground mb-3 px-3 text-xs font-medium'>
-                本页标题
-              </p>
-              <div className='border-border space-y-1 border-l pl-3'>
-                {sections.map((section) => (
-                  <div key={section.id} className='py-1'>
-                    <a
-                      href={`#${section.id}`}
-                      className='text-foreground block text-sm font-medium hover:text-primary'
-                    >
-                      {section.title}
-                    </a>
-                    {section.headings?.map((heading) => (
-                      <p
-                        key={`${section.id}-${heading}`}
-                        className='text-muted-foreground mt-1 truncate pl-3 text-xs'
-                      >
-                        {heading}
-                      </p>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </aside>
         </div>
       </div>
     </PublicLayout>
