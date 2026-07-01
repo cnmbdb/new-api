@@ -50,19 +50,33 @@ function normalizeViewMode(value: unknown): ViewMode {
   return VIEW_MODES.CARD
 }
 
+function firstString(value: unknown): string | undefined {
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) return firstString(value[0])
+  return undefined
+}
+
+function normalizeTokenUnit(value: unknown): TokenUnit | undefined {
+  return value === 'K' || value === 'M' ? value : undefined
+}
+
+function normalizeRechargePrice(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined
+}
+
 export function useFilters(models: PricingModel[]) {
-  const search = useSearch({ from: '/pricing/' })
+  const search = useSearch({ strict: false })
   const [filterState, setFilterState] = useState<FilterState>(() => ({
-    search: search.search,
-    sort: search.sort,
-    vendor: search.vendor,
-    group: search.group,
-    quotaType: search.quotaType,
-    endpointType: search.endpointType,
-    tag: search.tag,
-    tokenUnit: search.tokenUnit,
-    view: search.view,
-    rechargePrice: search.rechargePrice,
+    search: firstString(search.search),
+    sort: firstString(search.sort),
+    vendor: firstString(search.vendor),
+    group: firstString(search.group),
+    quotaType: firstString(search.quotaType),
+    endpointType: firstString(search.endpointType),
+    tag: firstString(search.tag),
+    tokenUnit: normalizeTokenUnit(search.tokenUnit),
+    view: normalizeViewMode(search.view),
+    rechargePrice: normalizeRechargePrice(search.rechargePrice),
   }))
 
   const searchInput = filterState.search || ''

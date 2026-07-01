@@ -16,24 +16,24 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useAuthStore } from '@/stores/auth-store'
-import { ROLE } from '@/lib/roles'
-import { MODELS_DEFAULT_SECTION } from '@/features/models/section-registry'
+import z from 'zod'
+import { createFileRoute } from '@tanstack/react-router'
+import { Pricing } from '@/features/pricing'
+
+const pricingSearchSchema = z.object({
+  search: z.string().optional(),
+  sort: z.string().optional(),
+  vendor: z.string().optional(),
+  group: z.string().optional(),
+  quotaType: z.string().optional(),
+  endpointType: z.string().optional(),
+  tag: z.string().optional(),
+  tokenUnit: z.enum(['M', 'K']).optional(),
+  view: z.enum(['card', 'table']).optional().catch(undefined),
+  rechargePrice: z.boolean().optional(),
+})
 
 export const Route = createFileRoute('/_authenticated/models/')({
-  beforeLoad: () => {
-    const { auth } = useAuthStore.getState()
-
-    if (!auth.user || auth.user.role < ROLE.ADMIN) {
-      throw redirect({
-        to: '/403',
-      })
-    }
-
-    throw redirect({
-      to: '/models/$section',
-      params: { section: MODELS_DEFAULT_SECTION },
-    })
-  },
+  validateSearch: pricingSearchSchema,
+  component: Pricing,
 })
