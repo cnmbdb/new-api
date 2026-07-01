@@ -92,6 +92,10 @@ export function SidebarModulesSection({
         title: t('Dashboard'),
         description: t('Aggregated usage metrics and trend charts.'),
       },
+      pricing: {
+        title: t('Model Square'),
+        description: t('Model catalog and pricing directory.'),
+      },
       token: {
         title: t('Token management'),
         description: t('Create, revoke, and audit API tokens.'),

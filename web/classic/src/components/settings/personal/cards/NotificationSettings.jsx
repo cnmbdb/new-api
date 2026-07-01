@@ -72,6 +72,7 @@ const NotificationSettings = ({
     console: {
       enabled: true,
       detail: true,
+      pricing: true,
       token: true,
       log: true,
       midjourney: true,
@@ -160,6 +161,7 @@ const NotificationSettings = ({
       console: {
         enabled: true,
         detail: true,
+        pricing: true,
         token: true,
         log: true,
         midjourney: true,
@@ -263,6 +265,11 @@ const NotificationSettings = ({
       description: t('数据管理和日志查看'),
       modules: [
         { key: 'detail', title: t('数据看板'), description: t('系统数据统计') },
+        {
+          key: 'pricing',
+          title: t('模型广场'),
+          description: t('模型目录和价格展示'),
+        },
         { key: 'token', title: t('令牌管理'), description: t('API令牌管理') },
         { key: 'log', title: t('使用日志'), description: t('API使用记录') },
         {
@@ -478,7 +485,10 @@ const NotificationSettings = ({
                     checkedText={t('开')}
                     uncheckedText={t('关')}
                     onChange={(value) =>
-                      handleFormChange('upstreamModelUpdateNotifyEnabled', value)
+                      handleFormChange(
+                        'upstreamModelUpdateNotifyEnabled',
+                        value,
+                      )
                     }
                     extraText={t(
                       '仅管理员可用。开启后，当系统定时检测全部渠道发现上游模型变更或检测异常时，将按你选择的通知方式发送汇总通知；渠道或模型过多时会自动省略部分明细。',

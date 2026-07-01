@@ -468,6 +468,7 @@ func generateDefaultSidebarConfig(userRole int) string {
 	defaultConfig["console"] = map[string]interface{}{
 		"enabled":    true,
 		"detail":     true,
+		"pricing":    true,
 		"token":      true,
 		"log":        true,
 		"midjourney": true,

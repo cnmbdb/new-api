@@ -22,6 +22,7 @@ import {
   Key,
   FileText,
   Wallet,
+  Store,
   Box,
   Users,
   Ticket,
@@ -80,6 +81,12 @@ export function useSidebarData(): SidebarData {
             title: t('Dashboard'),
             url: '/dashboard/models',
             icon: LayoutDashboard,
+          },
+          {
+            title: t('Model Square'),
+            url: '/pricing',
+            icon: Store,
+            configUrls: ['/pricing'],
           },
           {
             title: t('API Keys'),

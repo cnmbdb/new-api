@@ -82,6 +82,11 @@ export function SidebarModulesCard() {
           description: t('System data statistics'),
         },
         {
+          key: 'pricing',
+          title: t('Model Square'),
+          description: t('Model catalog and pricing directory'),
+        },
+        {
           key: 'token',
           title: t('Token Management'),
           description: t('API token management'),
