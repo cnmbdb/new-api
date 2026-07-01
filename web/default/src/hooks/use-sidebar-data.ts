@@ -84,9 +84,9 @@ export function useSidebarData(): SidebarData {
           },
           {
             title: t('Model Square'),
-            url: '/models',
+            url: '/pricing',
             icon: Store,
-            configUrls: ['/models'],
+            configUrls: ['/pricing'],
           },
           {
             title: t('API Keys'),

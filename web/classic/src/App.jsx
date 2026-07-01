@@ -335,25 +335,6 @@ function App() {
           }
         />
         <Route
-          path='/models'
-          element={
-            pricingRequireAuth ? (
-              <PrivateRoute>
-                <Suspense
-                  fallback={<Loading></Loading>}
-                  key={location.pathname}
-                >
-                  <Pricing />
-                </Suspense>
-              </PrivateRoute>
-            ) : (
-              <Suspense fallback={<Loading></Loading>} key={location.pathname}>
-                <Pricing />
-              </Suspense>
-            )
-          }
-        />
-        <Route
           path='/about'
           element={
             <Suspense fallback={<Loading></Loading>} key={location.pathname}>
