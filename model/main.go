@@ -191,9 +191,7 @@ func InitDB() (err error) {
 		if err != nil {
 			return err
 		}
-		sqlDB.SetMaxIdleConns(common.GetEnvOrDefault("SQL_MAX_IDLE_CONNS", 100))
-		sqlDB.SetMaxOpenConns(common.GetEnvOrDefault("SQL_MAX_OPEN_CONNS", 1000))
-		sqlDB.SetConnMaxLifetime(time.Second * time.Duration(common.GetEnvOrDefault("SQL_MAX_LIFETIME", 60)))
+		configureDBPool(sqlDB)
 
 		if !common.IsMasterNode {
 			return nil
@@ -231,9 +229,7 @@ func InitLogDB() (err error) {
 		if err != nil {
 			return err
 		}
-		sqlDB.SetMaxIdleConns(common.GetEnvOrDefault("SQL_MAX_IDLE_CONNS", 100))
-		sqlDB.SetMaxOpenConns(common.GetEnvOrDefault("SQL_MAX_OPEN_CONNS", 1000))
-		sqlDB.SetConnMaxLifetime(time.Second * time.Duration(common.GetEnvOrDefault("SQL_MAX_LIFETIME", 60)))
+		configureDBPool(sqlDB)
 
 		if !common.IsMasterNode {
 			return nil
@@ -245,6 +241,24 @@ func InitLogDB() (err error) {
 		common.FatalLog(err)
 	}
 	return err
+}
+
+type dbPool interface {
+	SetMaxIdleConns(int)
+	SetMaxOpenConns(int)
+	SetConnMaxLifetime(time.Duration)
+}
+
+func configureDBPool(sqlDB dbPool) {
+	maxOpenConns := common.GetEnvOrDefault("SQL_MAX_OPEN_CONNS", 25)
+	maxIdleConns := common.GetEnvOrDefault("SQL_MAX_IDLE_CONNS", 5)
+	if maxIdleConns > maxOpenConns {
+		maxIdleConns = maxOpenConns
+	}
+	sqlDB.SetMaxIdleConns(maxIdleConns)
+	sqlDB.SetMaxOpenConns(maxOpenConns)
+	sqlDB.SetConnMaxLifetime(time.Second * time.Duration(common.GetEnvOrDefault("SQL_MAX_LIFETIME", 300)))
+	common.SysLog(fmt.Sprintf("database pool configured: max_open=%d max_idle=%d max_lifetime=%ds", maxOpenConns, maxIdleConns, common.GetEnvOrDefault("SQL_MAX_LIFETIME", 300)))
 }
 
 func migrateDB() error {
