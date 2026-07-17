@@ -17,7 +17,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React, { useContext, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   Button,
   Typography,
@@ -65,8 +71,12 @@ import {
 
 const { Text } = Typography;
 
+const HOME_IFRAME_SANDBOX =
+  'allow-downloads allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation';
+
 const Home = () => {
   const { t, i18n } = useTranslation();
+  const iframeRef = useRef(null);
   const [statusState] = useContext(StatusContext);
   const actualTheme = useActualTheme();
   const [homePageContentLoaded, setHomePageContentLoaded] = useState(false);
@@ -81,6 +91,14 @@ const Home = () => {
   const [endpointIndex, setEndpointIndex] = useState(0);
   const isChinese = i18n.language.startsWith('zh');
 
+  const syncIframePreferences = useCallback(() => {
+    const iframeWindow = iframeRef.current?.contentWindow;
+    if (!iframeWindow) return;
+
+    iframeWindow.postMessage({ themeMode: actualTheme }, '*');
+    iframeWindow.postMessage({ lang: i18n.language }, '*');
+  }, [actualTheme, i18n.language]);
+
   const displayHomePageContent = async () => {
     setHomePageContent(localStorage.getItem('home_page_content') || '');
     const res = await API.get('/api/home_page_content');
@@ -92,17 +110,6 @@ const Home = () => {
       }
       setHomePageContent(content);
       localStorage.setItem('home_page_content', content);
-
-      // 如果内容是 URL，则发送主题模式
-      if (data.startsWith('https://')) {
-        const iframe = document.querySelector('iframe');
-        if (iframe) {
-          iframe.onload = () => {
-            iframe.contentWindow.postMessage({ themeMode: actualTheme }, '*');
-            iframe.contentWindow.postMessage({ lang: i18n.language }, '*');
-          };
-        }
-      }
     } else {
       showError(message);
       setHomePageContent('加载首页内容失败...');
@@ -140,6 +147,12 @@ const Home = () => {
   useEffect(() => {
     displayHomePageContent().then();
   }, []);
+
+  useEffect(() => {
+    if (homePageContent.startsWith('https://')) {
+      syncIframePreferences();
+    }
+  }, [homePageContent, syncIframePreferences]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -338,8 +351,12 @@ const Home = () => {
         <div className='overflow-x-hidden w-full'>
           {homePageContent.startsWith('https://') ? (
             <iframe
+              ref={iframeRef}
               src={homePageContent}
               className='w-full h-screen border-none'
+              title={t('自定义首页')}
+              sandbox={HOME_IFRAME_SANDBOX}
+              onLoad={syncIframePreferences}
             />
           ) : (
             <div

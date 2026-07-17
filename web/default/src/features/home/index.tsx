@@ -16,19 +16,40 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
+import { useTheme } from '@/context/theme-provider'
 import { Markdown } from '@/components/ui/markdown'
 import { PublicLayout } from '@/components/layout'
 import { Footer } from '@/components/layout/components/footer'
 import { CTA, Features, Hero, HowItWorks, Stats } from './components'
 import { useHomePageContent } from './hooks'
 
+const HOME_IFRAME_SANDBOX =
+  'allow-downloads allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts allow-top-navigation-by-user-activation'
+
 export function Home() {
-  const { t } = useTranslation()
+  const { i18n, t } = useTranslation()
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const { resolvedTheme } = useTheme()
   const { auth } = useAuthStore()
   const isAuthenticated = !!auth.user
   const { content, isLoaded, isUrl } = useHomePageContent()
+
+  const syncIframePreferences = useCallback(() => {
+    const iframeWindow = iframeRef.current?.contentWindow
+    if (!iframeWindow) return
+
+    iframeWindow.postMessage({ themeMode: resolvedTheme }, '*')
+    iframeWindow.postMessage({ lang: i18n.language }, '*')
+  }, [i18n.language, resolvedTheme])
+
+  useEffect(() => {
+    if (isUrl) {
+      syncIframePreferences()
+    }
+  }, [isUrl, syncIframePreferences])
 
   if (!isLoaded) {
     return (
@@ -44,9 +65,12 @@ export function Home() {
     if (isUrl) {
       return (
         <iframe
+          ref={iframeRef}
           src={content}
           className='h-screen w-full border-none'
           title={t('Custom Home Page')}
+          sandbox={HOME_IFRAME_SANDBOX}
+          onLoad={syncIframePreferences}
         />
       )
     }
