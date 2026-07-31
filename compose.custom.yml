@@ -1,0 +1,36 @@
+services:
+  new-api:
+    image: ${CUSTOM_IMAGE:-new-api-custom:local}
+    build:
+      context: .
+      dockerfile: Dockerfile.custom
+      args:
+        OFFICIAL_RUNTIME: ${OFFICIAL_RUNTIME:-calciumion/new-api:latest}
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - new_api_data:/data
+      - new_api_logs:/app/logs
+    environment:
+      SQL_DSN: ${SQL_DSN:?SQL_DSN is required}
+      REDIS_CONN_STRING: ${REDIS_CONN_STRING:?REDIS_CONN_STRING is required}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
+      TZ: ${TZ:-Asia/Shanghai}
+      NODE_NAME: ${NODE_NAME:-new-api-custom-1}
+      ERROR_LOG_ENABLED: ${ERROR_LOG_ENABLED:-true}
+      BATCH_UPDATE_ENABLED: ${BATCH_UPDATE_ENABLED:-true}
+      SQL_MAX_IDLE_CONNS: ${SQL_MAX_IDLE_CONNS:-5}
+      SQL_MAX_OPEN_CONNS: ${SQL_MAX_OPEN_CONNS:-25}
+      SQL_MAX_LIFETIME: ${SQL_MAX_LIFETIME:-300}
+    command: --log-dir /app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -q '\"success\"[[:space:]]*:[[:space:]]*true'"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  new_api_data:
+  new_api_logs:
