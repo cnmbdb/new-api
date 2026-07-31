@@ -16,24 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { SidebarTrigger } from '@/components/ui/sidebar'
-import { cn } from '@/lib/utils'
+import { createFileRoute } from '@tanstack/react-router'
 
-type HeaderProps = React.HTMLAttributes<HTMLElement>
+import { Docs } from '@/features/docs'
 
-export function Header({ className, children, ...props }: HeaderProps) {
-  return (
-    <header
-      className={cn(
-        'liquid-nav sticky top-0 z-40 mx-2 mt-2 h-[var(--app-header-height,3rem)] w-[calc(100%-1rem)] shrink-0 rounded-2xl',
-        className
-      )}
-      {...props}
-    >
-      <div className='flex h-full items-center gap-1.5 px-2 sm:gap-2 sm:px-3'>
-        <SidebarTrigger variant='ghost' className='size-8' />
-        {children}
-      </div>
-    </header>
-  )
-}
+export const Route = createFileRoute('/docs/')({
+  component: Docs,
+})
