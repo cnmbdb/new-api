@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile.custom
       args:
-        OFFICIAL_RUNTIME: ${OFFICIAL_RUNTIME:-calciumion/new-api:latest}
+        OFFICIAL_RUNTIME: ${OFFICIAL_RUNTIME:-calciumion/new-api@sha256:bacbbfbed64b4579213316e0ed78415985223bb20c47fbc24572dd7be5aa1695}
     restart: unless-stopped
     ports:
       - "${APP_PORT:-3000}:3000"
