@@ -28,8 +28,6 @@ services:
         source: .
         target: /workspace
       - dev_data:/data
-      - dev_go_modules:/go/pkg/mod
-      - dev_go_build:/root/.cache/go-build
     environment:
       SQLITE_PATH: /data/one-api.db
       MEMORY_CACHE_ENABLED: "false"
@@ -62,7 +60,6 @@ services:
         source: .
         target: /workspace
       - dev_web_modules:/workspace/web/node_modules
-      - dev_bun_cache:/root/.bun/install/cache
     environment:
       VITE_REACT_APP_SERVER_URL: http://new-api:3000
     depends_on:
@@ -73,10 +70,7 @@ services:
 
 volumes:
   dev_data:
-  dev_go_modules:
-  dev_go_build:
   dev_web_modules:
-  dev_bun_cache:
 
 networks:
   dev-network:

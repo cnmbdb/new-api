@@ -41,8 +41,9 @@ documentation link to `/docs` in the administrator settings.
 ## Remote-image development
 
 GitHub Actions builds `ghcr.io/cnmbdb/new-api:dev` for both amd64 and arm64.
-The image contains Go, Bun, Air, and dependency caches. Local Compose pulls the
-image and bind-mounts this checkout; it never builds a Docker image locally.
+The image contains Go, Bun, Air, frontend dependencies, Go modules, and a primed
+Go build cache. Local Compose pulls the image and bind-mounts this checkout; it
+never builds a Docker image or downloads application dependencies locally.
 
 ```bash
 make dev-pull

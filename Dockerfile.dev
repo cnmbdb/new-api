@@ -28,17 +28,22 @@ WORKDIR /workspace
 
 COPY go.mod go.sum ./
 COPY relaykit/go.mod relaykit/go.sum ./relaykit/
-RUN --mount=type=cache,target=/go/pkg/mod go mod download
+RUN go mod download
 
 COPY web/package.json web/bun.lock ./web/
 RUN --mount=type=cache,id=new-api-dev-bun,target=/root/.bun/install/cache \
     cd web \
     && bun install --frozen-lockfile \
     && mkdir -p /opt/new-api-dev \
-    && mv node_modules /opt/new-api-dev/node_modules
+    && mv node_modules /opt/new-api-dev/node_modules \
+    && sha256sum bun.lock | cut -d ' ' -f 1 > /opt/new-api-dev/bun-lock.sha256
 
-COPY dev/dev-api-entrypoint.sh /usr/local/bin/new-api-dev-api
-COPY dev/dev-web-entrypoint.sh /usr/local/bin/new-api-dev-web
-RUN chmod +x /usr/local/bin/new-api-dev-api /usr/local/bin/new-api-dev-web
+COPY . .
+RUN mkdir -p web/dist \
+    && printf '%s\n' '<!doctype html><html><body>development placeholder</body></html>' > web/dist/index.html \
+    && go build -trimpath -o /tmp/new-api-dev-prime . \
+    && rm -f /tmp/new-api-dev-prime web/dist/index.html \
+    && install -m 0755 dev/dev-api-entrypoint.sh /usr/local/bin/new-api-dev-api \
+    && install -m 0755 dev/dev-web-entrypoint.sh /usr/local/bin/new-api-dev-web
 
 CMD ["/usr/local/bin/new-api-dev-api"]
