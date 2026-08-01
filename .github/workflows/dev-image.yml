@@ -1,0 +1,103 @@
+name: Publish development workspace image
+
+on:
+  push:
+    branches:
+      - custom/upstream
+    paths:
+      - .github/workflows/dev-image.yml
+      - Dockerfile.dev
+      - dev/**
+      - go.mod
+      - go.sum
+      - relaykit/go.mod
+      - relaykit/go.sum
+      - web/package.json
+      - web/bun.lock
+  workflow_dispatch:
+
+concurrency:
+  group: dev-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and push (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4 # v4.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push development image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: Dockerfile.dev
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: |
+            ghcr.io/cnmbdb/new-api:dev-${{ matrix.arch }}
+            ghcr.io/cnmbdb/new-api:dev-${{ github.sha }}-${{ matrix.arch }}
+          cache-from: type=gha,scope=dev-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=dev-${{ matrix.arch }}
+          provenance: mode=max
+          sbom: true
+
+  manifest:
+    name: Publish multi-architecture tags
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4 # v4.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create multi-architecture manifests
+        run: |
+          docker buildx imagetools create \
+            -t ghcr.io/cnmbdb/new-api:dev \
+            ghcr.io/cnmbdb/new-api:dev-amd64 \
+            ghcr.io/cnmbdb/new-api:dev-arm64
+          docker buildx imagetools create \
+            -t ghcr.io/cnmbdb/new-api:dev-${{ github.sha }} \
+            ghcr.io/cnmbdb/new-api:dev-${{ github.sha }}-amd64 \
+            ghcr.io/cnmbdb/new-api:dev-${{ github.sha }}-arm64
+
+      - name: Write image summary
+        run: |
+          echo '### Development image' >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          docker buildx imagetools inspect ghcr.io/cnmbdb/new-api:dev >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

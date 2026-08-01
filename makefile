@@ -2,13 +2,10 @@ WEB_DIR = ./web
 API_DIR = .
 DEV_WEB_PORT ?= 5173
 DEV_COMPOSE_FILE = docker-compose.dev.yml
-DEV_POSTGRES_SERVICE = postgres
 DEV_API_SERVICE = new-api
-DEV_POSTGRES_DB = new-api
-DEV_POSTGRES_USER = root
 DEV_SQLITE_PATH ?= one-api.db
 
-.PHONY: all build-web build-all-web start-api dev dev-api dev-api-rebuild dev-web reset-setup test
+.PHONY: all build-web build-all-web start-api dev dev-pull dev-api dev-api-rebuild dev-web reset-setup test
 
 all: build-all-web start-api
 
@@ -24,20 +21,24 @@ start-api:
 	@cd $(API_DIR) && go run main.go &
 
 dev-api:
-	@echo "Starting api services (docker)..."
-	@docker compose -f $(DEV_COMPOSE_FILE) up -d
+	@echo "Starting SQLite api service from the remote development image..."
+	@docker compose -f $(DEV_COMPOSE_FILE) up -d new-api
 
 dev-api-rebuild:
-	@echo "Rebuilding and starting api service (docker)..."
-	@docker compose -f $(DEV_COMPOSE_FILE) up -d --build $(DEV_API_SERVICE)
+	@echo "Refreshing the remote development image and recreating the api service..."
+	@docker compose -f $(DEV_COMPOSE_FILE) pull $(DEV_API_SERVICE)
+	@docker compose -f $(DEV_COMPOSE_FILE) up -d --force-recreate $(DEV_API_SERVICE)
 
 dev-web:
-	@echo "Starting web frontend dev server..."
+	@echo "Starting web frontend from the remote development image..."
 	@echo "Web frontend: http://localhost:$(DEV_WEB_PORT)"
-	@cd $(WEB_DIR) && bun install
-	@cd $(WEB_DIR) && bun run dev -- --host 0.0.0.0 --port $(DEV_WEB_PORT)
+	@docker compose -f $(DEV_COMPOSE_FILE) up web
 
-dev: dev-api dev-web
+dev:
+	@docker compose -f $(DEV_COMPOSE_FILE) up
+
+dev-pull:
+	@docker compose -f $(DEV_COMPOSE_FILE) pull
 
 # The main package embeds the ignored web/dist output and is covered after build-web.
 test:
@@ -50,13 +51,11 @@ test:
 
 reset-setup:
 	@echo "Resetting local setup wizard state..."
-	@if docker compose -f $(DEV_COMPOSE_FILE) ps --services --status running | grep -qx "$(DEV_POSTGRES_SERVICE)"; then \
-		echo "Detected running docker dev PostgreSQL. Removing setup record and root users..."; \
-		docker compose -f $(DEV_COMPOSE_FILE) exec -T $(DEV_POSTGRES_SERVICE) \
-			psql -U $(DEV_POSTGRES_USER) -d $(DEV_POSTGRES_DB) \
-			-c 'DELETE FROM setups;' \
-			-c 'DELETE FROM users WHERE role = 100;' \
-			-c "DELETE FROM options WHERE key IN ('SelfUseModeEnabled', 'DemoSiteEnabled');"; \
+	@if docker compose -f $(DEV_COMPOSE_FILE) ps --services --status running | grep -qx "$(DEV_API_SERVICE)"; then \
+		echo "Detected running Docker SQLite development service. Removing setup record and root users..."; \
+		docker compose -f $(DEV_COMPOSE_FILE) exec -T $(DEV_API_SERVICE) \
+			sqlite3 /data/one-api.db \
+			"DELETE FROM setups; DELETE FROM users WHERE role = 100; DELETE FROM options WHERE key IN ('SelfUseModeEnabled', 'DemoSiteEnabled');"; \
 		echo "Restarting docker dev api so setup status is recalculated..."; \
 		docker compose -f $(DEV_COMPOSE_FILE) restart $(DEV_API_SERVICE); \
 	elif db_path="$${SQLITE_PATH:-$(DEV_SQLITE_PATH)}"; db_path="$${db_path%%\?*}"; [ -f "$$db_path" ]; then \
@@ -67,7 +66,7 @@ reset-setup:
 			"DELETE FROM setups; DELETE FROM users WHERE role = 100; DELETE FROM options WHERE key IN ('SelfUseModeEnabled', 'DemoSiteEnabled');"; \
 		echo "SQLite setup state reset. Restart the local api process before testing the setup wizard."; \
 	else \
-		echo "No running docker dev PostgreSQL or local SQLite database found."; \
+		echo "No running Docker dev API or local SQLite database found."; \
 		echo "Start the dev stack with 'make dev-api', or set SQLITE_PATH/DEV_SQLITE_PATH to your local SQLite database."; \
 		exit 1; \
 	fi

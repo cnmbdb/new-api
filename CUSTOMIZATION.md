@@ -10,7 +10,7 @@ custom commits on top.
 - Liquid-glass application header.
 - Trusted administrator Footer HTML script execution.
 - Explicit `$` prefix on recharge presets.
-- Railway-friendly database pool defaults through environment variables.
+- SQLite persistence with Redis and in-memory caching disabled by default.
 - A custom image built on the official runtime image.
 
 Features now available upstream (model square, translation protection and home
@@ -31,8 +31,29 @@ docker compose --env-file .env.custom -f compose.custom.yml up -d --build
 For production, set `OFFICIAL_RUNTIME` to an immutable official image digest
 instead of `latest`.
 
+The custom Compose stack stores SQLite at `/data/one-api.db`. Back up the
+`new_api_data` volume before upgrades. This single-node configuration does not
+start or require Redis.
+
 To show the internal documentation from the navigation bar, set the system
 documentation link to `/docs` in the administrator settings.
+
+## Remote-image development
+
+GitHub Actions builds `ghcr.io/cnmbdb/new-api:dev` for both amd64 and arm64.
+The image contains Go, Bun, Air, and dependency caches. Local Compose pulls the
+image and bind-mounts this checkout; it never builds a Docker image locally.
+
+```bash
+make dev-pull
+make dev
+# Open http://localhost:5173
+```
+
+Go files reload through Air. Frontend files reload through Rsbuild. Development
+data is SQLite in the `dev_data` volume, and no Redis service is started. Normal
+source edits do not require a new development image; dependency-file changes
+trigger the Actions workflow and require another `make dev-pull`.
 
 ## Update from official
 

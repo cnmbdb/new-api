@@ -1,0 +1,20 @@
+root = "."
+tmp_dir = "/tmp/new-api-air"
+
+[build]
+bin = "/tmp/new-api-air/new-api"
+cmd = "go build -trimpath -ldflags \"-X 'github.com/QuantumNous/new-api/common.Version=dev'\" -o /tmp/new-api-air/new-api ."
+delay = 750
+exclude_dir = [".git", ".gitnexus", "data", "logs", "web", "tmp"]
+exclude_regex = ["_test.go"]
+include_ext = ["go"]
+kill_delay = "500ms"
+send_interrupt = true
+stop_on_error = true
+
+[log]
+time = true
+
+[screen]
+clear_on_rebuild = false
+keep_scroll = true
