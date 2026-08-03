@@ -1,76 +1,77 @@
-# Remote-image development stack. No local Docker image build is performed.
+# Frontend Development - Backend built from local source
 #
-# First use or dependency refresh:
-#   docker compose -f docker-compose.dev.yml pull
+# Usage:
+#   1. docker compose -f docker-compose.dev.yml up -d
+#   2. make dev-web
+#   3. Open http://localhost:5173 (Rsbuild dev server, API auto-proxied to :3000)
 #
-# Start API + web development:
-#   docker compose -f docker-compose.dev.yml up
-#   open http://localhost:5173
+# Rebuild backend after Go code changes:
+#   docker compose -f docker-compose.dev.yml up -d --build new-api
 #
-# SQLite is persisted in dev_data. Redis and external databases are disabled.
-
-name: new-api-dev
-
-x-dev-image: &dev-image ${DEV_IMAGE:-ghcr.io/cnmbdb/new-api:dev}
+# Stop:
+#   docker compose -f docker-compose.dev.yml down
+#
+# Reset data:
+#   docker compose -f docker-compose.dev.yml down -v
 
 services:
   new-api:
-    image: *dev-image
-    pull_policy: always
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: new-api-dev:local
     container_name: new-api-dev
-    init: true
-    working_dir: /workspace
-    command: ["/usr/local/bin/new-api-dev-api"]
+    restart: unless-stopped
     ports:
-      - "${DEV_API_PORT:-3000}:3000"
+      - "3000:3000"
     volumes:
-      - type: bind
-        source: .
-        target: /workspace
       - dev_data:/data
     environment:
-      SQLITE_PATH: /data/one-api.db
-      MEMORY_CACHE_ENABLED: "false"
-      SESSION_SECRET: ${DEV_SESSION_SECRET:-new-api-local-dev-session-secret-change-me}
-      SESSION_COOKIE_SECURE: "false"
-      TZ: ${TZ:-Asia/Shanghai}
-      DEBUG: "true"
-      NODE_NAME: new-api-dev
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -q '\"success\"[[:space:]]*:[[:space:]]*true'"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-      start_period: 20s
-    stop_grace_period: 10s
-    networks:
-      - dev-network
-
-  web:
-    image: *dev-image
-    pull_policy: always
-    container_name: new-api-dev-web
-    init: true
-    working_dir: /workspace/web
-    command: ["/usr/local/bin/new-api-dev-web"]
-    ports:
-      - "${DEV_WEB_PORT:-5173}:5173"
-    volumes:
-      - type: bind
-        source: .
-        target: /workspace
-      - dev_web_modules:/workspace/web/node_modules
-    environment:
-      VITE_REACT_APP_SERVER_URL: http://new-api:3000
+      - SQL_DSN=postgresql://root:123456@postgres:5432/new-api
+      - REDIS_CONN_STRING=redis://redis
+      - TZ=Asia/Shanghai
+      - BATCH_UPDATE_ENABLED=true
+      # Local HTTP dev mode: keep Secure=false and leave TRUSTED_URL unset. This disables the refresh/logout OriginGuard so the :5173 -> :3000 dev proxy works.
+      - SESSION_COOKIE_SECURE=false
+      # For HTTPS only: set Secure=true and list every exact trusted HTTPS browser Origin. This does not configure relay CORS.
+      # - SESSION_COOKIE_SECURE=true
+      # - SESSION_COOKIE_TRUSTED_URL=https://example.com,https://admin.example.com
     depends_on:
-      new-api:
+      redis:
+        condition: service_started
+      postgres:
         condition: service_healthy
     networks:
       - dev-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: new-api-dev-redis
+    restart: unless-stopped
+    networks:
+      - dev-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: new-api-dev-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: new-api
+    volumes:
+      - dev_pg_data:/var/lib/postgresql/data
+    networks:
+      - dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d new-api"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
 volumes:
   dev_data:
-  dev_web_modules:
+  dev_pg_data:
 
 networks:
   dev-network:

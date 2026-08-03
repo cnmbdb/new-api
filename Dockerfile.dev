@@ -1,49 +1,35 @@
-# syntax=docker/dockerfile:1.7
+# Backend-only build for frontend development
+# Skips frontend build and uses a placeholder for //go:embed web/dist
 
-# Remote-built development workspace. It contains both Go and Bun toolchains,
-# backend module caches, frontend dependencies, and Air for backend hot reload.
-# Local development only pulls this image and bind-mounts the checkout.
-ARG GO_IMAGE=golang:1.26.1-bookworm@sha256:ab3d6955bbc813a0f3fdf220c1d817dd89c0b3f283777db8ece4a32fe7858edd
-ARG BUN_IMAGE=oven/bun:1@sha256:0733e50325078969732ebe3b15ce4c4be5082f18c4ac1a0f0ca4839c2e4e42a7
+FROM golang:1.26.1-alpine AS builder
 
-FROM ${BUN_IMAGE} AS bun-toolchain
+ENV GO111MODULE=on CGO_ENABLED=0
+ARG TARGETOS
+ARG TARGETARCH
+ENV GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64}
+ENV GOEXPERIMENT=greenteagc
 
-FROM ${GO_IMAGE}
+WORKDIR /build
 
-ENV CGO_ENABLED=0 \
-    GO111MODULE=on \
-    GOWORK=off \
-    GOEXPERIMENT=greenteagc
+ADD go.mod go.sum ./
+RUN go mod download
 
-COPY --from=bun-toolchain /usr/local/bin/bun /usr/local/bin/bun
+COPY . .
+
+RUN mkdir -p web/dist && \
+    echo '<!doctype html><html><head><title>dev</title></head><body>use frontend dev server</body></html>' > web/dist/index.html
+
+RUN go build -ldflags "-s -w -X 'github.com/QuantumNous/new-api/common.Version=$(cat VERSION)'" -o new-api
+
+FROM debian:bookworm-slim
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates sqlite3 tzdata wget \
+    && apt-get install -y --no-install-recommends ca-certificates tzdata wget \
     && rm -rf /var/lib/apt/lists/* \
     && update-ca-certificates
 
-RUN go install github.com/air-verse/air@v1.67.4
-
-WORKDIR /workspace
-
-COPY go.mod go.sum ./
-COPY relaykit/go.mod relaykit/go.sum ./relaykit/
-RUN go mod download
-
-COPY web/package.json web/bun.lock ./web/
-RUN --mount=type=cache,id=new-api-dev-bun,target=/root/.bun/install/cache \
-    cd web \
-    && bun install --frozen-lockfile \
-    && mkdir -p /opt/new-api-dev \
-    && mv node_modules /opt/new-api-dev/node_modules \
-    && sha256sum bun.lock | cut -d ' ' -f 1 > /opt/new-api-dev/bun-lock.sha256
-
-COPY . .
-RUN mkdir -p web/dist \
-    && printf '%s\n' '<!doctype html><html><body>development placeholder</body></html>' > web/dist/index.html \
-    && go build -trimpath -o /tmp/new-api-dev-prime . \
-    && rm -f /tmp/new-api-dev-prime web/dist/index.html \
-    && install -m 0755 dev/dev-api-entrypoint.sh /usr/local/bin/new-api-dev-api \
-    && install -m 0755 dev/dev-web-entrypoint.sh /usr/local/bin/new-api-dev-web
-
-CMD ["/usr/local/bin/new-api-dev-api"]
+COPY --from=builder /build/new-api /
+COPY LICENSE NOTICE THIRD-PARTY-LICENSES.md /licenses/
+EXPOSE 3000
+WORKDIR /data
+ENTRYPOINT ["/new-api"]
