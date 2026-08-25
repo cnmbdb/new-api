@@ -27,3 +27,4 @@ if [ "${found_patch}" = false ]; then
 fi
 
 sh "${custom_dir}/verify-home-iframe.sh"
+sh "${custom_dir}/verify-maintained-features.sh"

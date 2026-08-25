@@ -1,0 +1,55 @@
+diff --git a/web/src/components/layout/components/header.tsx b/web/src/components/layout/components/header.tsx
+--- a/web/src/components/layout/components/header.tsx
++++ b/web/src/components/layout/components/header.tsx
+@@ -25,7 +25,7 @@ export function Header({ className, children, ...props }: HeaderProps) {
+   return (
+     <header
+       className={cn(
+-        'sticky top-0 z-40 h-[var(--app-header-height,3rem)] w-full shrink-0 bg-transparent',
++        'liquid-nav sticky top-0 z-40 mx-2 mt-2 h-[var(--app-header-height,3rem)] w-[calc(100%-1rem)] shrink-0 rounded-2xl',
+         className
+       )}
+       {...props}
+diff --git a/web/src/styles/index.css b/web/src/styles/index.css
+--- a/web/src/styles/index.css
++++ b/web/src/styles/index.css
+@@ -632,2 +632,38 @@ For commercial licensing, please contact support@quantumnous.com
++/* Custom patch: translucent navigation surface kept separate from theme tokens. */
++.liquid-nav {
++  position: relative;
++  overflow: hidden;
++  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
++  background: color-mix(in srgb, var(--background) 72%, transparent);
++  box-shadow:
++    0 12px 36px rgb(0 0 0 / 8%),
++    inset 0 1px 0 rgb(255 255 255 / 16%);
++  -webkit-backdrop-filter: blur(16px) saturate(140%);
++  backdrop-filter: blur(16px) saturate(140%);
++}
++
++.liquid-nav::before {
++  position: absolute;
++  inset: 0;
++  border-radius: inherit;
++  background: linear-gradient(
++    135deg,
++    rgb(255 255 255 / 20%),
++    transparent 38%,
++    transparent 62%,
++    rgb(255 255 255 / 10%)
++  );
++  content: '';
++  pointer-events: none;
++}
++
++@media (prefers-reduced-transparency: reduce) {
++  .liquid-nav {
++    background: var(--background);
++    -webkit-backdrop-filter: none;
++    backdrop-filter: none;
++  }
++}
++
+ /* ── Hero terminal demo animations ── */
+ @keyframes terminal-demo-blink {
+   0%,
