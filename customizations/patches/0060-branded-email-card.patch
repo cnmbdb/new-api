@@ -57,6 +57,10 @@ index d948b92d3..166e0a6ad 100644
 +		if siteURL == "" {
 +			siteURL = defaultEmailSiteURL
 +		}
++		logoURL := strings.TrimSpace(os.Getenv("EMAIL_LOGO_URL"))
++		if logoURL == "" {
++			logoURL = defaultEmailLogoURL
++		}
 +		requestPayload.HTML = ""
 +		requestPayload.Template = &resendTemplateRequest{
 +			ID: templateID,
@@ -65,6 +69,7 @@ index d948b92d3..166e0a6ad 100644
 +				"SUBJECT":  subject,
 +				"CONTENT":  accentEmailContent(content),
 +				"SITE_URL": siteURL,
++				"LOGO_URL": logoURL,
 +			},
 +		}
 +	}
@@ -105,6 +110,7 @@ index adf9413ac..3745c9eb5 100644
 +	t.Setenv("RESEND_FROM", "suxintoken <noreply@suxintoken.com>")
 +	t.Setenv("RESEND_TEMPLATE_ID", "suxintoken-transactional-card")
 +	t.Setenv("EMAIL_SITE_URL", "https://suxintoken.com")
++	t.Setenv("EMAIL_LOGO_URL", "https://cdn.example.com/logo-white.png")
 +	originalSystemName := SystemName
 +	SystemName = "suxintoken"
 +	t.Cleanup(func() { SystemName = originalSystemName })
@@ -118,7 +124,8 @@ index adf9413ac..3745c9eb5 100644
 +		assert.Equal(t, "suxintoken", payload.Template.Variables["BRAND"])
 +		assert.Equal(t, "邮箱验证码", payload.Template.Variables["SUBJECT"])
 +		assert.Equal(t, "https://suxintoken.com", payload.Template.Variables["SITE_URL"])
-+		assert.Contains(t, payload.Template.Variables["CONTENT"], `color:#f97316`)
++		assert.Equal(t, "https://cdn.example.com/logo-white.png", payload.Template.Variables["LOGO_URL"])
++		assert.Contains(t, payload.Template.Variables["CONTENT"], `color:#F6821F`)
 +		assert.Contains(t, payload.Template.Variables["CONTENT"], `>123456</strong>`)
 +		w.WriteHeader(http.StatusOK)
 +	}))
@@ -155,23 +162,26 @@ index 000000000..f0ad9442b
 +	"strings"
 +)
 +
-+const defaultEmailSiteURL = "https://suxintoken.com"
++const (
++	defaultEmailSiteURL = "https://suxintoken.com"
++	defaultEmailLogoURL = "https://raw.githubusercontent.com/cnmbdb/new-api/main/customizations/assets/suxintoken-email-logo-white.png"
++)
 +
 +func accentEmailContent(content string) string {
 +	content = strings.ReplaceAll(
 +		content,
 +		"<strong>",
-+		`<strong style="color:#f97316;font-weight:800;letter-spacing:0.04em;">`,
++		`<strong style="color:#F6821F;font-weight:800;letter-spacing:0.04em;">`,
 +	)
 +	content = strings.ReplaceAll(
 +		content,
 +		"<code>",
-+		`<code style="color:#f97316;font-weight:700;">`,
++		`<code style="color:#F6821F;font-weight:700;">`,
 +	)
 +	return strings.ReplaceAll(
 +		content,
 +		"<a ",
-+		`<a style="color:#f97316;font-weight:700;" `,
++		`<a style="color:#F6821F;font-weight:700;" `,
 +	)
 +}
 +
@@ -188,6 +198,10 @@ index 000000000..f0ad9442b
 +	if siteURL == "" {
 +		siteURL = defaultEmailSiteURL
 +	}
++	logoURL := strings.TrimSpace(os.Getenv("EMAIL_LOGO_URL"))
++	if logoURL == "" {
++		logoURL = defaultEmailLogoURL
++	}
 +
 +	accentedContent := accentEmailContent(content)
 +
@@ -197,6 +211,8 @@ index 000000000..f0ad9442b
 +  <meta charset="UTF-8">
 +  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 +  <meta http-equiv="X-UA-Compatible" content="IE=edge">
++  <meta name="color-scheme" content="light only">
++  <meta name="supported-color-schemes" content="light only">
 +  <title>%s</title>
 +  <style>
 +    .email-content p { margin: 0 0 16px 0; }
@@ -208,20 +224,18 @@ index 000000000..f0ad9442b
 +    }
 +  </style>
 +</head>
-+<body style="margin:0;padding:0;background-color:#fff7ed;font-family:Arial,Helvetica,sans-serif;color:#292524;">
++<body style="margin:0;padding:0;background-color:transparent;font-family:Arial,Helvetica,sans-serif;color:#292524;">
 +  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">%s</div>
-+  <table width="100%%" cellpadding="0" cellspacing="0" border="0" role="presentation" bgcolor="#fff7ed">
++  <table width="100%%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="background-color:transparent;">
 +    <tr>
 +      <td class="email-shell" align="center" style="padding:40px 16px;">
 +        <table data-new-api-email-card="true" width="600" cellpadding="0" cellspacing="0" border="0" role="presentation" style="width:100%%;max-width:600px;background-color:#ffffff;border:1px solid #fed7aa;border-radius:20px;overflow:hidden;box-shadow:0 16px 40px rgba(154,52,18,0.10);">
 +          <tr>
-+            <td class="email-header" bgcolor="#f97316" style="padding:28px 34px;background-color:#f97316;">
++            <td class="email-header" bgcolor="#F6821F" style="padding:28px 34px;background-color:#F6821F!important;background-image:linear-gradient(#F6821F,#F6821F)!important;">
 +              <table width="100%%" cellpadding="0" cellspacing="0" border="0" role="presentation">
 +                <tr>
 +                  <td align="center" valign="middle">
-+                    <table width="50" height="50" cellpadding="0" cellspacing="0" border="0" role="presentation" style="width:50px;height:50px;border:2px solid #ffffff;border-radius:15px;">
-+                      <tr><td align="center" valign="middle" style="font-size:26px;line-height:46px;font-weight:800;color:#ffffff;">S</td></tr>
-+                    </table>
++                    <img src="%s" width="78" height="78" border="0" alt="%s Logo" style="display:block;width:78px;height:78px;border:0;outline:none;text-decoration:none;">
 +                  </td>
 +                </tr>
 +              </table>
@@ -229,7 +243,7 @@ index 000000000..f0ad9442b
 +          </tr>
 +          <tr>
 +            <td class="email-body" style="padding:38px 34px 28px;">
-+              <div style="font-size:12px;line-height:18px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#f97316;">ACCOUNT MESSAGE</div>
++              <div style="font-size:12px;line-height:18px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#F6821F;">ACCOUNT MESSAGE</div>
 +              <h1 style="margin:8px 0 24px;font-size:25px;line-height:34px;font-weight:800;color:#1c1917;">%s</h1>
 +              <div class="email-content" style="font-size:16px;line-height:28px;color:#57534e;">%s</div>
 +            </td>
@@ -238,9 +252,9 @@ index 000000000..f0ad9442b
 +            <td align="center" style="padding:0 34px 36px;">
 +              <table cellpadding="0" cellspacing="0" border="0" role="presentation">
 +                <tr>
-+                  <td align="center" bgcolor="#f97316" style="border-radius:999px;background-color:#f97316;box-shadow:0 8px 20px rgba(249,115,22,0.24);">
++                  <td align="center" bgcolor="#F6821F" style="border-radius:999px;background-color:#F6821F!important;background-image:linear-gradient(#F6821F,#F6821F)!important;box-shadow:0 8px 20px rgba(246,130,31,0.28);">
 +                    <a href="%s" target="_blank" style="display:inline-block;padding:14px 28px;font-size:15px;line-height:20px;font-weight:800;color:#ffffff;text-decoration:none;border-radius:999px;">
-+                      <span style="color:#ffffff;font-weight:900;">S</span>&nbsp;&nbsp;前往网站
++                      <img src="%s" width="18" height="18" border="0" alt="" style="display:inline-block;width:18px;height:18px;border:0;vertical-align:-4px;">&nbsp;&nbsp;前往网站
 +                    </a>
 +                  </td>
 +                </tr>
@@ -260,9 +274,12 @@ index 000000000..f0ad9442b
 +</html>`,
 +		html.EscapeString(subject),
 +		html.EscapeString(subject),
++		html.EscapeString(logoURL),
++		html.EscapeString(brand),
 +		html.EscapeString(subject),
 +		accentedContent,
 +		html.EscapeString(siteURL),
++		html.EscapeString(logoURL),
 +		html.EscapeString(brand),
 +	)
 +}
@@ -284,6 +301,7 @@ index 000000000..b0a3e3e47
 +
 +func TestBuildBrandedEmailHTMLCreatesOrangeCard(t *testing.T) {
 +	t.Setenv("EMAIL_SITE_URL", "https://suxintoken.com/account")
++	t.Setenv("EMAIL_LOGO_URL", "https://cdn.example.com/logo-white.png")
 +	originalSystemName := SystemName
 +	SystemName = "suxintoken"
 +	t.Cleanup(func() { SystemName = originalSystemName })
@@ -294,11 +312,13 @@ index 000000000..b0a3e3e47
 +	)
 +
 +	require.Contains(t, result, `data-new-api-email-card="true"`)
-+	assert.Contains(t, result, `background-color:#f97316`)
++	assert.Contains(t, result, `background-color:#F6821F!important`)
++	assert.Contains(t, result, `background-color:transparent`)
 +	assert.Contains(t, result, `border:1px solid #fed7aa`)
 +	assert.Contains(t, result, `<td align="center" valign="middle">`)
-+	assert.Contains(t, result, `color:#ffffff;">S</td>`)
-+	assert.Contains(t, result, `color:#f97316;font-weight:800`)
++	assert.Contains(t, result, `src="https://cdn.example.com/logo-white.png" width="78" height="78"`)
++	assert.Contains(t, result, `src="https://cdn.example.com/logo-white.png" width="18" height="18"`)
++	assert.Contains(t, result, `color:#F6821F;font-weight:800`)
 +	assert.Contains(t, result, `>123456</strong>`)
 +	assert.Contains(t, result, `href="https://suxintoken.com/account"`)
 +	assert.Contains(t, result, `前往网站`)
@@ -306,6 +326,7 @@ index 000000000..b0a3e3e47
 +
 +func TestBuildBrandedEmailHTMLUsesSafeFallbacks(t *testing.T) {
 +	t.Setenv("EMAIL_SITE_URL", "")
++	t.Setenv("EMAIL_LOGO_URL", "")
 +	originalSystemName := SystemName
 +	SystemName = "  "
 +	t.Cleanup(func() { SystemName = originalSystemName })
@@ -313,9 +334,9 @@ index 000000000..b0a3e3e47
 +	result := buildBrandedEmailHTML(`<Reset & Confirm>`, `<p>Open <a href="/reset">this link</a>.</p>`)
 +
 +	assert.Contains(t, result, `&lt;Reset &amp; Confirm&gt;`)
-+	assert.Contains(t, result, `color:#ffffff;">S</td>`)
++	assert.Contains(t, result, `src="https://raw.githubusercontent.com/cnmbdb/new-api/main/customizations/assets/suxintoken-email-logo-white.png"`)
 +	assert.Contains(t, result, `href="https://suxintoken.com"`)
-+	assert.Contains(t, result, `style="color:#f97316;font-weight:700;" href="/reset"`)
++	assert.Contains(t, result, `style="color:#F6821F;font-weight:700;" href="/reset"`)
 +}
 +
 +func TestBuildBrandedEmailHTMLDoesNotWrapTwice(t *testing.T) {
