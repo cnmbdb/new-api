@@ -25,11 +25,13 @@ start-api:
 
 dev-api:
 	@echo "Starting api services (docker)..."
+	@docker compose -f $(DEV_COMPOSE_FILE) pull $(DEV_API_SERVICE)
 	@docker compose -f $(DEV_COMPOSE_FILE) up -d
 
 dev-api-rebuild:
-	@echo "Rebuilding and starting api service (docker)..."
-	@docker compose -f $(DEV_COMPOSE_FILE) up -d --build $(DEV_API_SERVICE)
+	@echo "Refreshing remote api workspace image (docker)..."
+	@docker compose -f $(DEV_COMPOSE_FILE) pull $(DEV_API_SERVICE)
+	@docker compose -f $(DEV_COMPOSE_FILE) up -d --force-recreate $(DEV_API_SERVICE)
 
 dev-web:
 	@echo "Starting web frontend dev server..."

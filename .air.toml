@@ -1,0 +1,18 @@
+root = "."
+tmp_dir = "/tmp/new-api-air"
+
+[build]
+  bin = "/tmp/new-api-air/main"
+  cmd = "go build -o /tmp/new-api-air/main ."
+  delay = 1000
+  entrypoint = ["/tmp/new-api-air/main"]
+  exclude_dir = [".git", ".gitnexus", "docs", "electron", "node_modules", "testdata", "tmp", "vendor", "web"]
+  exclude_regex = ["_test.go"]
+  include_ext = ["go", "html", "tmpl", "tpl"]
+  stop_on_error = false
+
+[log]
+  time = true
+
+[misc]
+  clean_on_exit = true
