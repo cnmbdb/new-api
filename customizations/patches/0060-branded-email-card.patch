@@ -1,21 +1,151 @@
 diff --git a/common/email.go b/common/email.go
-index 3d3c0b140..f7989f842 100644
+index 3d3c0b140..88f7d3d4f 100644
 --- a/common/email.go
 +++ b/common/email.go
-@@ -76,6 +76,7 @@ func newSMTPClient(addr string) (*smtp.Client, error) {
- }
- 
- func SendEmail(subject string, receiver string, content string) error {
-+	content = buildBrandedEmailHTML(subject, content)
+@@ -79,6 +79,7 @@ func SendEmail(subject string, receiver string, content string) error {
  	if handled, err := trySendEmailWithResend(subject, receiver, content); handled {
  		return err
  	}
++	content = buildBrandedEmailHTML(subject, content)
+ 	if SMTPFrom == "" { // for compatibility
+ 		SMTPFrom = SMTPAccount
+ 	}
+diff --git a/common/email_resend.go b/common/email_resend.go
+index d948b92d3..166e0a6ad 100644
+--- a/common/email_resend.go
++++ b/common/email_resend.go
+@@ -15,10 +15,16 @@ const resendUserAgent = "new-api-resend-adapter/1.0"
+ var resendAPIEndpoint = "https://api.resend.com/emails"
+ 
+ type resendEmailRequest struct {
+-	From    string   `json:"from"`
+-	To      []string `json:"to"`
+-	Subject string   `json:"subject"`
+-	HTML    string   `json:"html"`
++	From     string                 `json:"from"`
++	To       []string               `json:"to"`
++	Subject  string                 `json:"subject"`
++	HTML     string                 `json:"html,omitempty"`
++	Template *resendTemplateRequest `json:"template,omitempty"`
++}
++
++type resendTemplateRequest struct {
++	ID        string            `json:"id"`
++	Variables map[string]string `json:"variables"`
+ }
+ 
+ type resendErrorResponse struct {
+@@ -47,12 +53,34 @@ func trySendEmailWithResend(subject string, receiver string, content string) (bo
+ 		return true, fmt.Errorf("email receiver is required")
+ 	}
+ 
+-	payload, err := Marshal(resendEmailRequest{
++	requestPayload := resendEmailRequest{
+ 		From:    from,
+ 		To:      recipients,
+ 		Subject: subject,
+-		HTML:    content,
+-	})
++		HTML:    buildBrandedEmailHTML(subject, content),
++	}
++	if templateID := strings.TrimSpace(os.Getenv("RESEND_TEMPLATE_ID")); templateID != "" {
++		brand := strings.TrimSpace(SystemName)
++		if brand == "" {
++			brand = "suxintoken"
++		}
++		siteURL := strings.TrimSpace(os.Getenv("EMAIL_SITE_URL"))
++		if siteURL == "" {
++			siteURL = defaultEmailSiteURL
++		}
++		requestPayload.HTML = ""
++		requestPayload.Template = &resendTemplateRequest{
++			ID: templateID,
++			Variables: map[string]string{
++				"BRAND":    brand,
++				"SUBJECT":  subject,
++				"CONTENT":  accentEmailContent(content),
++				"SITE_URL": siteURL,
++			},
++		}
++	}
++
++	payload, err := Marshal(requestPayload)
+ 	if err != nil {
+ 		return true, fmt.Errorf("failed to encode Resend email request: %w", err)
+ 	}
+diff --git a/common/email_resend_test.go b/common/email_resend_test.go
+index adf9413ac..3745c9eb5 100644
+--- a/common/email_resend_test.go
++++ b/common/email_resend_test.go
+@@ -23,6 +23,7 @@ func TestTrySendEmailWithResendDisabled(t *testing.T) {
+ func TestTrySendEmailWithResendSuccess(t *testing.T) {
+ 	t.Setenv("RESEND_API_KEY", "test-api-key")
+ 	t.Setenv("RESEND_FROM", "New API <noreply@example.com>")
++	t.Setenv("RESEND_TEMPLATE_ID", "")
+ 
+ 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+ 		assert.Equal(t, http.MethodPost, r.Method)
+@@ -36,7 +37,9 @@ func TestTrySendEmailWithResendSuccess(t *testing.T) {
+ 		assert.Equal(t, "New API <noreply@example.com>", payload.From)
+ 		assert.Equal(t, []string{"first@example.com", "second@example.com"}, payload.To)
+ 		assert.Equal(t, "Verification", payload.Subject)
+-		assert.Equal(t, "<strong>code</strong>", payload.HTML)
++		assert.Contains(t, payload.HTML, `data-new-api-email-card="true"`)
++		assert.Contains(t, payload.HTML, `>code</strong>`)
++		assert.Nil(t, payload.Template)
+ 
+ 		w.WriteHeader(http.StatusOK)
+ 	}))
+@@ -55,6 +58,43 @@ func TestTrySendEmailWithResendSuccess(t *testing.T) {
+ 	assert.True(t, handled)
+ }
+ 
++func TestTrySendEmailWithResendTemplate(t *testing.T) {
++	t.Setenv("RESEND_API_KEY", "test-api-key")
++	t.Setenv("RESEND_FROM", "suxintoken <noreply@suxintoken.com>")
++	t.Setenv("RESEND_TEMPLATE_ID", "suxintoken-transactional-card")
++	t.Setenv("EMAIL_SITE_URL", "https://suxintoken.com")
++	originalSystemName := SystemName
++	SystemName = "suxintoken"
++	t.Cleanup(func() { SystemName = originalSystemName })
++
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		var payload resendEmailRequest
++		require.NoError(t, DecodeJson(r.Body, &payload))
++		assert.Empty(t, payload.HTML)
++		require.NotNil(t, payload.Template)
++		assert.Equal(t, "suxintoken-transactional-card", payload.Template.ID)
++		assert.Equal(t, "suxintoken", payload.Template.Variables["BRAND"])
++		assert.Equal(t, "邮箱验证码", payload.Template.Variables["SUBJECT"])
++		assert.Equal(t, "https://suxintoken.com", payload.Template.Variables["SITE_URL"])
++		assert.Contains(t, payload.Template.Variables["CONTENT"], `color:#f97316`)
++		assert.Contains(t, payload.Template.Variables["CONTENT"], `>123456</strong>`)
++		w.WriteHeader(http.StatusOK)
++	}))
++	t.Cleanup(server.Close)
++	previousEndpoint := resendAPIEndpoint
++	resendAPIEndpoint = server.URL
++	t.Cleanup(func() { resendAPIEndpoint = previousEndpoint })
++
++	handled, err := trySendEmailWithResend(
++		"邮箱验证码",
++		"user@example.com",
++		"<p>验证码：<strong>123456</strong></p>",
++	)
++
++	require.NoError(t, err)
++	assert.True(t, handled)
++}
++
+ func TestTrySendEmailWithResendRequiresFrom(t *testing.T) {
+ 	t.Setenv("RESEND_API_KEY", "test-api-key")
+ 	t.Setenv("RESEND_FROM", "")
 diff --git a/common/email_template.go b/common/email_template.go
 new file mode 100644
-index 000000000..77564a871
+index 000000000..f0ad9442b
 --- /dev/null
 +++ b/common/email_template.go
-@@ -0,0 +1,121 @@
+@@ -0,0 +1,120 @@
 +package common
 +
 +import (
@@ -26,6 +156,24 @@ index 000000000..77564a871
 +)
 +
 +const defaultEmailSiteURL = "https://suxintoken.com"
++
++func accentEmailContent(content string) string {
++	content = strings.ReplaceAll(
++		content,
++		"<strong>",
++		`<strong style="color:#f97316;font-weight:800;letter-spacing:0.04em;">`,
++	)
++	content = strings.ReplaceAll(
++		content,
++		"<code>",
++		`<code style="color:#f97316;font-weight:700;">`,
++	)
++	return strings.ReplaceAll(
++		content,
++		"<a ",
++		`<a style="color:#f97316;font-weight:700;" `,
++	)
++}
 +
 +func buildBrandedEmailHTML(subject string, content string) string {
 +	if strings.Contains(content, `data-new-api-email-card="true"`) {
@@ -41,21 +189,7 @@ index 000000000..77564a871
 +		siteURL = defaultEmailSiteURL
 +	}
 +
-+	accentedContent := strings.ReplaceAll(
-+		content,
-+		"<strong>",
-+		`<strong style="color:#f97316;font-weight:800;letter-spacing:0.04em;">`,
-+	)
-+	accentedContent = strings.ReplaceAll(
-+		accentedContent,
-+		"<code>",
-+		`<code style="color:#f97316;font-weight:700;">`,
-+	)
-+	accentedContent = strings.ReplaceAll(
-+		accentedContent,
-+		"<a ",
-+		`<a style="color:#f97316;font-weight:700;" `,
-+	)
++	accentedContent := accentEmailContent(content)
 +
 +	return fmt.Sprintf(`<!DOCTYPE html>
 +<html lang="zh-CN">
@@ -84,14 +218,10 @@ index 000000000..77564a871
 +            <td class="email-header" bgcolor="#f97316" style="padding:28px 34px;background-color:#f97316;">
 +              <table width="100%%" cellpadding="0" cellspacing="0" border="0" role="presentation">
 +                <tr>
-+                  <td width="54" valign="middle">
-+                    <table width="46" height="46" cellpadding="0" cellspacing="0" border="0" role="presentation" style="width:46px;height:46px;border:2px solid #ffffff;border-radius:14px;">
-+                      <tr><td align="center" valign="middle" style="font-size:24px;line-height:42px;font-weight:800;color:#ffffff;">S</td></tr>
++                  <td align="center" valign="middle">
++                    <table width="50" height="50" cellpadding="0" cellspacing="0" border="0" role="presentation" style="width:50px;height:50px;border:2px solid #ffffff;border-radius:15px;">
++                      <tr><td align="center" valign="middle" style="font-size:26px;line-height:46px;font-weight:800;color:#ffffff;">S</td></tr>
 +                    </table>
-+                  </td>
-+                  <td valign="middle" style="padding-left:14px;">
-+                    <div style="font-size:20px;line-height:26px;font-weight:800;color:#ffffff;">%s</div>
-+                    <div style="padding-top:3px;font-size:13px;line-height:18px;color:#ffedd5;">安全通知</div>
 +                  </td>
 +                </tr>
 +              </table>
@@ -130,7 +260,6 @@ index 000000000..77564a871
 +</html>`,
 +		html.EscapeString(subject),
 +		html.EscapeString(subject),
-+		html.EscapeString(brand),
 +		html.EscapeString(subject),
 +		accentedContent,
 +		html.EscapeString(siteURL),
@@ -139,10 +268,10 @@ index 000000000..77564a871
 +}
 diff --git a/common/email_template_test.go b/common/email_template_test.go
 new file mode 100644
-index 000000000..0ef5fb6da
+index 000000000..b0a3e3e47
 --- /dev/null
 +++ b/common/email_template_test.go
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,54 @@
 +package common
 +
 +import (
@@ -167,7 +296,8 @@ index 000000000..0ef5fb6da
 +	require.Contains(t, result, `data-new-api-email-card="true"`)
 +	assert.Contains(t, result, `background-color:#f97316`)
 +	assert.Contains(t, result, `border:1px solid #fed7aa`)
-+	assert.Contains(t, result, `>suxintoken</div>`)
++	assert.Contains(t, result, `<td align="center" valign="middle">`)
++	assert.Contains(t, result, `color:#ffffff;">S</td>`)
 +	assert.Contains(t, result, `color:#f97316;font-weight:800`)
 +	assert.Contains(t, result, `>123456</strong>`)
 +	assert.Contains(t, result, `href="https://suxintoken.com/account"`)
@@ -183,7 +313,7 @@ index 000000000..0ef5fb6da
 +	result := buildBrandedEmailHTML(`<Reset & Confirm>`, `<p>Open <a href="/reset">this link</a>.</p>`)
 +
 +	assert.Contains(t, result, `&lt;Reset &amp; Confirm&gt;`)
-+	assert.Contains(t, result, `>suxintoken</div>`)
++	assert.Contains(t, result, `color:#ffffff;">S</td>`)
 +	assert.Contains(t, result, `href="https://suxintoken.com"`)
 +	assert.Contains(t, result, `style="color:#f97316;font-weight:700;" href="/reset"`)
 +}

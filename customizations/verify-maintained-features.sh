@@ -43,5 +43,7 @@ require_text common/email.go 'content = buildBrandedEmailHTML(subject, content)'
 require_text common/email_template.go 'data-new-api-email-card="true"'
 require_text common/email_template.go 'EMAIL_SITE_URL'
 require_text common/email_template.go '前往网站'
+require_text common/email_resend.go 'RESEND_TEMPLATE_ID'
+require_text common/email_resend.go 'resendTemplateRequest'
 
 echo "Maintained custom feature patches are present"
