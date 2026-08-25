@@ -2,10 +2,12 @@ diff --git a/common/email.go b/common/email.go
 index 6ee26c0cb..3d3c0b140 100644
 --- a/common/email.go
 +++ b/common/email.go
-@@ -78,0 +79,3 @@ func SendEmail(subject string, receiver string, content string) error {
+@@ -78,2 +78,5 @@ func newSMTPClient(addr string) (*smtp.Client, error) {
+ func SendEmail(subject string, receiver string, content string) error {
 +	if handled, err := trySendEmailWithResend(subject, receiver, content); handled {
 +		return err
 +	}
+ 	if SMTPFrom == "" { // for compatibility
 diff --git a/common/email_resend.go b/common/email_resend.go
 new file mode 100644
 index 000000000..d948b92d3
