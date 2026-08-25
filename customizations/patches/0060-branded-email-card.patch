@@ -1,0 +1,198 @@
+diff --git a/common/email.go b/common/email.go
+index 3d3c0b140..f7989f842 100644
+--- a/common/email.go
++++ b/common/email.go
+@@ -76,6 +76,7 @@ func newSMTPClient(addr string) (*smtp.Client, error) {
+ }
+ 
+ func SendEmail(subject string, receiver string, content string) error {
++	content = buildBrandedEmailHTML(subject, content)
+ 	if handled, err := trySendEmailWithResend(subject, receiver, content); handled {
+ 		return err
+ 	}
+diff --git a/common/email_template.go b/common/email_template.go
+new file mode 100644
+index 000000000..77564a871
+--- /dev/null
++++ b/common/email_template.go
+@@ -0,0 +1,121 @@
++package common
++
++import (
++	"fmt"
++	"html"
++	"os"
++	"strings"
++)
++
++const defaultEmailSiteURL = "https://suxintoken.com"
++
++func buildBrandedEmailHTML(subject string, content string) string {
++	if strings.Contains(content, `data-new-api-email-card="true"`) {
++		return content
++	}
++
++	brand := strings.TrimSpace(SystemName)
++	if brand == "" {
++		brand = "suxintoken"
++	}
++	siteURL := strings.TrimSpace(os.Getenv("EMAIL_SITE_URL"))
++	if siteURL == "" {
++		siteURL = defaultEmailSiteURL
++	}
++
++	accentedContent := strings.ReplaceAll(
++		content,
++		"<strong>",
++		`<strong style="color:#f97316;font-weight:800;letter-spacing:0.04em;">`,
++	)
++	accentedContent = strings.ReplaceAll(
++		accentedContent,
++		"<code>",
++		`<code style="color:#f97316;font-weight:700;">`,
++	)
++	accentedContent = strings.ReplaceAll(
++		accentedContent,
++		"<a ",
++		`<a style="color:#f97316;font-weight:700;" `,
++	)
++
++	return fmt.Sprintf(`<!DOCTYPE html>
++<html lang="zh-CN">
++<head>
++  <meta charset="UTF-8">
++  <meta name="viewport" content="width=device-width, initial-scale=1.0">
++  <meta http-equiv="X-UA-Compatible" content="IE=edge">
++  <title>%s</title>
++  <style>
++    .email-content p { margin: 0 0 16px 0; }
++    .email-content p:last-child { margin-bottom: 0; }
++    @media only screen and (max-width: 640px) {
++      .email-shell { padding: 20px 12px !important; }
++      .email-body { padding: 30px 24px 22px !important; }
++      .email-header { padding: 24px !important; }
++    }
++  </style>
++</head>
++<body style="margin:0;padding:0;background-color:#fff7ed;font-family:Arial,Helvetica,sans-serif;color:#292524;">
++  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">%s</div>
++  <table width="100%%" cellpadding="0" cellspacing="0" border="0" role="presentation" bgcolor="#fff7ed">
++    <tr>
++      <td class="email-shell" align="center" style="padding:40px 16px;">
++        <table data-new-api-email-card="true" width="600" cellpadding="0" cellspacing="0" border="0" role="presentation" style="width:100%%;max-width:600px;background-color:#ffffff;border:1px solid #fed7aa;border-radius:20px;overflow:hidden;box-shadow:0 16px 40px rgba(154,52,18,0.10);">
++          <tr>
++            <td class="email-header" bgcolor="#f97316" style="padding:28px 34px;background-color:#f97316;">
++              <table width="100%%" cellpadding="0" cellspacing="0" border="0" role="presentation">
++                <tr>
++                  <td width="54" valign="middle">
++                    <table width="46" height="46" cellpadding="0" cellspacing="0" border="0" role="presentation" style="width:46px;height:46px;border:2px solid #ffffff;border-radius:14px;">
++                      <tr><td align="center" valign="middle" style="font-size:24px;line-height:42px;font-weight:800;color:#ffffff;">S</td></tr>
++                    </table>
++                  </td>
++                  <td valign="middle" style="padding-left:14px;">
++                    <div style="font-size:20px;line-height:26px;font-weight:800;color:#ffffff;">%s</div>
++                    <div style="padding-top:3px;font-size:13px;line-height:18px;color:#ffedd5;">安全通知</div>
++                  </td>
++                </tr>
++              </table>
++            </td>
++          </tr>
++          <tr>
++            <td class="email-body" style="padding:38px 34px 28px;">
++              <div style="font-size:12px;line-height:18px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#f97316;">ACCOUNT MESSAGE</div>
++              <h1 style="margin:8px 0 24px;font-size:25px;line-height:34px;font-weight:800;color:#1c1917;">%s</h1>
++              <div class="email-content" style="font-size:16px;line-height:28px;color:#57534e;">%s</div>
++            </td>
++          </tr>
++          <tr>
++            <td align="center" style="padding:0 34px 36px;">
++              <table cellpadding="0" cellspacing="0" border="0" role="presentation">
++                <tr>
++                  <td align="center" bgcolor="#f97316" style="border-radius:999px;background-color:#f97316;box-shadow:0 8px 20px rgba(249,115,22,0.24);">
++                    <a href="%s" target="_blank" style="display:inline-block;padding:14px 28px;font-size:15px;line-height:20px;font-weight:800;color:#ffffff;text-decoration:none;border-radius:999px;">
++                      <span style="color:#ffffff;font-weight:900;">S</span>&nbsp;&nbsp;前往网站
++                    </a>
++                  </td>
++                </tr>
++              </table>
++            </td>
++          </tr>
++          <tr>
++            <td align="center" style="padding:18px 28px;border-top:1px solid #ffedd5;background-color:#fffaf5;font-size:12px;line-height:18px;color:#a8a29e;">
++              此邮件由 %s 自动发送，请勿直接回复。
++            </td>
++          </tr>
++        </table>
++      </td>
++    </tr>
++  </table>
++</body>
++</html>`,
++		html.EscapeString(subject),
++		html.EscapeString(subject),
++		html.EscapeString(brand),
++		html.EscapeString(subject),
++		accentedContent,
++		html.EscapeString(siteURL),
++		html.EscapeString(brand),
++	)
++}
+diff --git a/common/email_template_test.go b/common/email_template_test.go
+new file mode 100644
+index 000000000..0ef5fb6da
+--- /dev/null
++++ b/common/email_template_test.go
+@@ -0,0 +1,53 @@
++package common
++
++import (
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestBuildBrandedEmailHTMLCreatesOrangeCard(t *testing.T) {
++	t.Setenv("EMAIL_SITE_URL", "https://suxintoken.com/account")
++	originalSystemName := SystemName
++	SystemName = "suxintoken"
++	t.Cleanup(func() { SystemName = originalSystemName })
++
++	result := buildBrandedEmailHTML(
++		"邮箱验证码",
++		"<p>您的验证码为：<strong>123456</strong></p>",
++	)
++
++	require.Contains(t, result, `data-new-api-email-card="true"`)
++	assert.Contains(t, result, `background-color:#f97316`)
++	assert.Contains(t, result, `border:1px solid #fed7aa`)
++	assert.Contains(t, result, `>suxintoken</div>`)
++	assert.Contains(t, result, `color:#f97316;font-weight:800`)
++	assert.Contains(t, result, `>123456</strong>`)
++	assert.Contains(t, result, `href="https://suxintoken.com/account"`)
++	assert.Contains(t, result, `前往网站`)
++}
++
++func TestBuildBrandedEmailHTMLUsesSafeFallbacks(t *testing.T) {
++	t.Setenv("EMAIL_SITE_URL", "")
++	originalSystemName := SystemName
++	SystemName = "  "
++	t.Cleanup(func() { SystemName = originalSystemName })
++
++	result := buildBrandedEmailHTML(`<Reset & Confirm>`, `<p>Open <a href="/reset">this link</a>.</p>`)
++
++	assert.Contains(t, result, `&lt;Reset &amp; Confirm&gt;`)
++	assert.Contains(t, result, `>suxintoken</div>`)
++	assert.Contains(t, result, `href="https://suxintoken.com"`)
++	assert.Contains(t, result, `style="color:#f97316;font-weight:700;" href="/reset"`)
++}
++
++func TestBuildBrandedEmailHTMLDoesNotWrapTwice(t *testing.T) {
++	existing := `<table data-new-api-email-card="true"><tr><td>Existing card</td></tr></table>`
++
++	result := buildBrandedEmailHTML("subject", existing)
++
++	assert.Equal(t, existing, result)
++	assert.Equal(t, 1, strings.Count(result, `data-new-api-email-card="true"`))
++}

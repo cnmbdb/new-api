@@ -22,6 +22,9 @@ Custom behavior is applied only during the GitHub Actions image build.
 - `0050-resend-email-api.patch`: send email through the Resend HTTPS API when
   `RESEND_API_KEY` and `RESEND_FROM` are configured, with the official SMTP
   implementation retained as the fallback when Resend is not configured.
+- `0060-branded-email-card.patch`: wrap outgoing email in a responsive orange
+  card with a white brand mark, highlighted verification details, and a
+  pill-shaped website button. `EMAIL_SITE_URL` controls the button target.
 
 Official features already present upstream, including the model marketplace,
 translation protection, and iframe theme/language synchronization, are verified

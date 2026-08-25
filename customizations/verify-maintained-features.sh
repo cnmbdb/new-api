@@ -37,4 +37,11 @@ require_text common/email_resend.go 'RESEND_API_KEY'
 require_text common/email_resend.go 'RESEND_FROM'
 require_text common/email_resend.go 'https://api.resend.com/emails'
 
+require_file common/email_template.go
+require_file common/email_template_test.go
+require_text common/email.go 'content = buildBrandedEmailHTML(subject, content)'
+require_text common/email_template.go 'data-new-api-email-card="true"'
+require_text common/email_template.go 'EMAIL_SITE_URL'
+require_text common/email_template.go '前往网站'
+
 echo "Maintained custom feature patches are present"
