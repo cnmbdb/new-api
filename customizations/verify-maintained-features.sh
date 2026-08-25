@@ -30,4 +30,11 @@ require_text web/src/styles/index.css '.liquid-nav {'
 
 require_text web/src/features/wallet/components/recharge-form-card.tsx '${formatNumber(displayValue)}'
 
+require_file common/email_resend.go
+require_file common/email_resend_test.go
+require_text common/email.go 'trySendEmailWithResend(subject, receiver, content)'
+require_text common/email_resend.go 'RESEND_API_KEY'
+require_text common/email_resend.go 'RESEND_FROM'
+require_text common/email_resend.go 'https://api.resend.com/emails'
+
 echo "Maintained custom feature patches are present"

@@ -1,0 +1,194 @@
+diff --git a/common/email.go b/common/email.go
+index 6ee26c0cb..3d3c0b140 100644
+--- a/common/email.go
++++ b/common/email.go
+@@ -78,0 +79,3 @@ func SendEmail(subject string, receiver string, content string) error {
++	if handled, err := trySendEmailWithResend(subject, receiver, content); handled {
++		return err
++	}
+diff --git a/common/email_resend.go b/common/email_resend.go
+new file mode 100644
+index 000000000..d948b92d3
+--- /dev/null
++++ b/common/email_resend.go
+@@ -0,0 +1,88 @@
++package common
++
++import (
++	"bytes"
++	"fmt"
++	"io"
++	"net/http"
++	"os"
++	"strings"
++	"time"
++)
++
++const resendUserAgent = "new-api-resend-adapter/1.0"
++
++var resendAPIEndpoint = "https://api.resend.com/emails"
++
++type resendEmailRequest struct {
++	From    string   `json:"from"`
++	To      []string `json:"to"`
++	Subject string   `json:"subject"`
++	HTML    string   `json:"html"`
++}
++
++type resendErrorResponse struct {
++	Message string `json:"message"`
++}
++
++func trySendEmailWithResend(subject string, receiver string, content string) (bool, error) {
++	apiKey := strings.TrimSpace(os.Getenv("RESEND_API_KEY"))
++	if apiKey == "" {
++		return false, nil
++	}
++
++	from := strings.TrimSpace(os.Getenv("RESEND_FROM"))
++	if from == "" {
++		return true, fmt.Errorf("RESEND_FROM is required when RESEND_API_KEY is configured")
++	}
++
++	recipients := make([]string, 0)
++	for _, address := range strings.Split(receiver, ";") {
++		address = strings.TrimSpace(address)
++		if address != "" {
++			recipients = append(recipients, address)
++		}
++	}
++	if len(recipients) == 0 {
++		return true, fmt.Errorf("email receiver is required")
++	}
++
++	payload, err := Marshal(resendEmailRequest{
++		From:    from,
++		To:      recipients,
++		Subject: subject,
++		HTML:    content,
++	})
++	if err != nil {
++		return true, fmt.Errorf("failed to encode Resend email request: %w", err)
++	}
++
++	req, err := http.NewRequest(http.MethodPost, resendAPIEndpoint, bytes.NewReader(payload))
++	if err != nil {
++		return true, fmt.Errorf("failed to create Resend email request: %w", err)
++	}
++	req.Header.Set("Authorization", "Bearer "+apiKey)
++	req.Header.Set("Content-Type", "application/json")
++	req.Header.Set("User-Agent", resendUserAgent)
++
++	client := &http.Client{Timeout: 15 * time.Second}
++	resp, err := client.Do(req)
++	if err != nil {
++		return true, fmt.Errorf("failed to call Resend API: %w", err)
++	}
++	defer resp.Body.Close()
++
++	if resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices {
++		return true, nil
++	}
++
++	body, readErr := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
++	if readErr != nil {
++		return true, fmt.Errorf("Resend API returned status %d", resp.StatusCode)
++	}
++	var apiError resendErrorResponse
++	if err = Unmarshal(body, &apiError); err == nil && strings.TrimSpace(apiError.Message) != "" {
++		return true, fmt.Errorf("Resend API returned status %d: %s", resp.StatusCode, apiError.Message)
++	}
++	return true, fmt.Errorf("Resend API returned status %d", resp.StatusCode)
++}
+diff --git a/common/email_resend_test.go b/common/email_resend_test.go
+new file mode 100644
+index 000000000..adf9413ac
+--- /dev/null
++++ b/common/email_resend_test.go
+@@ -0,0 +1,86 @@
++package common
++
++import (
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"github.com/stretchr/testify/require"
++)
++
++func TestTrySendEmailWithResendDisabled(t *testing.T) {
++	t.Setenv("RESEND_API_KEY", "")
++	t.Setenv("RESEND_FROM", "")
++
++	handled, err := trySendEmailWithResend("subject", "user@example.com", "content")
++
++	require.NoError(t, err)
++	assert.False(t, handled)
++}
++
++func TestTrySendEmailWithResendSuccess(t *testing.T) {
++	t.Setenv("RESEND_API_KEY", "test-api-key")
++	t.Setenv("RESEND_FROM", "New API <noreply@example.com>")
++
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		assert.Equal(t, http.MethodPost, r.Method)
++		assert.Equal(t, "/emails", r.URL.Path)
++		assert.Equal(t, "Bearer test-api-key", r.Header.Get("Authorization"))
++		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
++		assert.Equal(t, resendUserAgent, r.Header.Get("User-Agent"))
++
++		var payload resendEmailRequest
++		require.NoError(t, DecodeJson(r.Body, &payload))
++		assert.Equal(t, "New API <noreply@example.com>", payload.From)
++		assert.Equal(t, []string{"first@example.com", "second@example.com"}, payload.To)
++		assert.Equal(t, "Verification", payload.Subject)
++		assert.Equal(t, "<strong>code</strong>", payload.HTML)
++
++		w.WriteHeader(http.StatusOK)
++	}))
++	t.Cleanup(server.Close)
++	previousEndpoint := resendAPIEndpoint
++	resendAPIEndpoint = server.URL + "/emails"
++	t.Cleanup(func() { resendAPIEndpoint = previousEndpoint })
++
++	handled, err := trySendEmailWithResend(
++		"Verification",
++		" first@example.com ; second@example.com ",
++		"<strong>code</strong>",
++	)
++
++	require.NoError(t, err)
++	assert.True(t, handled)
++}
++
++func TestTrySendEmailWithResendRequiresFrom(t *testing.T) {
++	t.Setenv("RESEND_API_KEY", "test-api-key")
++	t.Setenv("RESEND_FROM", "")
++
++	handled, err := trySendEmailWithResend("subject", "user@example.com", "content")
++
++	assert.True(t, handled)
++	require.EqualError(t, err, "RESEND_FROM is required when RESEND_API_KEY is configured")
++}
++
++func TestTrySendEmailWithResendReturnsAPIErrorWithoutLeakingKey(t *testing.T) {
++	t.Setenv("RESEND_API_KEY", "secret-api-key")
++	t.Setenv("RESEND_FROM", "noreply@example.com")
++
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
++		w.WriteHeader(http.StatusUnprocessableEntity)
++		_, _ = w.Write([]byte(`{"message":"domain is not verified"}`))
++	}))
++	t.Cleanup(server.Close)
++	previousEndpoint := resendAPIEndpoint
++	resendAPIEndpoint = server.URL
++	t.Cleanup(func() { resendAPIEndpoint = previousEndpoint })
++
++	handled, err := trySendEmailWithResend("subject", "user@example.com", "content")
++
++	assert.True(t, handled)
++	require.EqualError(t, err, "Resend API returned status 422: domain is not verified")
++	assert.False(t, strings.Contains(err.Error(), "secret-api-key"))
++}
