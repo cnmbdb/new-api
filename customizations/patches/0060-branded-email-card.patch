@@ -35,7 +35,7 @@ index d948b92d3..166e0a6ad 100644
  }
  
  type resendErrorResponse struct {
-@@ -47,12 +53,34 @@ func trySendEmailWithResend(subject string, receiver string, content string) (bo
+@@ -47,12 +53,39 @@ func trySendEmailWithResend(subject string, receiver string, content string) (bo
  		return true, fmt.Errorf("email receiver is required")
  	}
  
@@ -101,7 +101,7 @@ index adf9413ac..3745c9eb5 100644
  
  		w.WriteHeader(http.StatusOK)
  	}))
-@@ -55,6 +58,43 @@ func TestTrySendEmailWithResendSuccess(t *testing.T) {
+@@ -55,6 +58,45 @@ func TestTrySendEmailWithResendSuccess(t *testing.T) {
  	assert.True(t, handled)
  }
  
@@ -152,7 +152,7 @@ new file mode 100644
 index 000000000..f0ad9442b
 --- /dev/null
 +++ b/common/email_template.go
-@@ -0,0 +1,120 @@
+@@ -0,0 +1,130 @@
 +package common
 +
 +import (
@@ -288,7 +288,7 @@ new file mode 100644
 index 000000000..b0a3e3e47
 --- /dev/null
 +++ b/common/email_template_test.go
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,58 @@
 +package common
 +
 +import (
