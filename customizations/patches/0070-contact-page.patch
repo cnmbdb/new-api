@@ -182,7 +182,91 @@ index 5a5baa2db..be510f81b 100644
 -    links.push({ title: t('About'), href: '/about' })
 +  // Chat
 +  if (modules?.chat !== false) {
-+    links.push({ title: t('Chat'), href: '/chat' })
++    links.push({ title: t('Group Chat'), href: '/chat' })
    }
  
    return links
+diff --git a/web/src/i18n/locales/en.json b/web/src/i18n/locales/en.json
+index 86095b29c..47f7e5e4f 100644
+--- a/web/src/i18n/locales/en.json
++++ b/web/src/i18n/locales/en.json
+@@ -2179,6 +2179,7 @@
+     "Group & Quota": "Group & Quota",
+     "Group added. Click \"Save Settings\" to apply.": "Group added. Click \"Save Settings\" to apply.",
+     "Group channels by tag for batch operations": "Group channels by tag for batch operations",
++    "Group Chat": "Group Chat",
+     "Group config overrides global limits, shares the same period": "Group config overrides global limits, shares the same period",
+     "Group deleted. Click \"Save Settings\" to apply.": "Group deleted. Click \"Save Settings\" to apply.",
+     "Group description": "Group description",
+diff --git a/web/src/i18n/locales/fr.json b/web/src/i18n/locales/fr.json
+index 1d4dc4b95..10ac4ef91 100644
+--- a/web/src/i18n/locales/fr.json
++++ b/web/src/i18n/locales/fr.json
+@@ -2179,6 +2179,7 @@
+     "Group & Quota": "Groupe et Quota",
+     "Group added. Click \"Save Settings\" to apply.": "Groupe ajouté. Cliquez sur \"Enregistrer les paramètres\" pour appliquer.",
+     "Group channels by tag for batch operations": "Regrouper les canaux par étiquette pour les opérations par lots",
++    "Group Chat": "Discussion de groupe",
+     "Group config overrides global limits, shares the same period": "La configuration du groupe annule les limites globales et partage la même période",
+     "Group deleted. Click \"Save Settings\" to apply.": "Groupe supprimé. Cliquez sur \"Enregistrer les paramètres\" pour appliquer.",
+     "Group description": "Description du groupe",
+diff --git a/web/src/i18n/locales/ja.json b/web/src/i18n/locales/ja.json
+index 7eaed9574..b03220e78 100644
+--- a/web/src/i18n/locales/ja.json
++++ b/web/src/i18n/locales/ja.json
+@@ -2179,6 +2179,7 @@
+     "Group & Quota": "グループとクォータ",
+     "Group added. Click \"Save Settings\" to apply.": "グループが追加されました。「Save Settings」をクリックして適用してください。",
+     "Group channels by tag for batch operations": "バッチ操作のためにタグでチャネルをグループ化",
++    "Group Chat": "グループチャット",
+     "Group config overrides global limits, shares the same period": "グループ設定はグローバル制限を上書きし、同じ期間を共有します",
+     "Group deleted. Click \"Save Settings\" to apply.": "グループが削除されました。「Save Settings」をクリックして適用してください。",
+     "Group description": "グループの説明",
+diff --git a/web/src/i18n/locales/ru.json b/web/src/i18n/locales/ru.json
+index 9e087d1fa..1bf8a43b9 100644
+--- a/web/src/i18n/locales/ru.json
++++ b/web/src/i18n/locales/ru.json
+@@ -2179,6 +2179,7 @@
+     "Group & Quota": "Группа и квота",
+     "Group added. Click \"Save Settings\" to apply.": "Группа добавлена. Нажмите \"Сохранить настройки\", чтобы применить.",
+     "Group channels by tag for batch operations": "Группировать каналы по тегу для пакетных операций",
++    "Group Chat": "Групповой чат",
+     "Group config overrides global limits, shares the same period": "Конфигурация группы переопределяет глобальные лимиты, использует тот же период",
+     "Group deleted. Click \"Save Settings\" to apply.": "Группа удалена. Нажмите \"Сохранить настройки\", чтобы применить.",
+     "Group description": "Описание группы",
+diff --git a/web/src/i18n/locales/vi.json b/web/src/i18n/locales/vi.json
+index 2ae592388..5cadc9f54 100644
+--- a/web/src/i18n/locales/vi.json
++++ b/web/src/i18n/locales/vi.json
+@@ -2179,6 +2179,7 @@
+     "Group & Quota": "Nhóm & Hạn mức",
+     "Group added. Click \"Save Settings\" to apply.": "Nhóm đã được thêm. Nhấp vào \"Lưu Cài đặt\" để áp dụng.",
+     "Group channels by tag for batch operations": "Nhóm kênh theo thẻ để thực hiện các thao tác hàng loạt",
++    "Group Chat": "Nhóm chat",
+     "Group config overrides global limits, shares the same period": "Cấu hình nhóm ghi đè giới hạn toàn cầu, chia sẻ cùng một chu kỳ",
+     "Group deleted. Click \"Save Settings\" to apply.": "Nhóm đã bị xóa. Nhấp vào \"Lưu Cài đặt\" để áp dụng.",
+     "Group description": "Mô tả nhóm",
+diff --git a/web/src/i18n/locales/zh-TW.json b/web/src/i18n/locales/zh-TW.json
+index 25250e24c..7aebb1ed4 100644
+--- a/web/src/i18n/locales/zh-TW.json
++++ b/web/src/i18n/locales/zh-TW.json
+@@ -2179,6 +2179,7 @@
+     "Group & Quota": "分組與配額",
+     "Group added. Click \"Save Settings\" to apply.": "組已新增。點擊「儲存設定」以套用。",
+     "Group channels by tag for batch operations": "按標籤對渠道進行分組以進行大量操作",
++    "Group Chat": "群聊",
+     "Group config overrides global limits, shares the same period": "分組設定覆蓋全局限制，共享同一周期",
+     "Group deleted. Click \"Save Settings\" to apply.": "組已刪除。點擊「儲存設定」以套用。",
+     "Group description": "分組描述",
+diff --git a/web/src/i18n/locales/zh.json b/web/src/i18n/locales/zh.json
+index 457b1c53f..5ce0579e5 100644
+--- a/web/src/i18n/locales/zh.json
++++ b/web/src/i18n/locales/zh.json
+@@ -2179,6 +2179,7 @@
+     "Group & Quota": "分组与配额",
+     "Group added. Click \"Save Settings\" to apply.": "组已添加。点击 \"保存设置\" 以应用。",
+     "Group channels by tag for batch operations": "按标签对渠道进行分组以进行批量操作",
++    "Group Chat": "群聊",
+     "Group config overrides global limits, shares the same period": "分组配置覆盖全局限制，共享同一周期",
+     "Group deleted. Click \"Save Settings\" to apply.": "组已删除。点击 \"保存设置\" 以应用。",
+     "Group description": "分组描述",
