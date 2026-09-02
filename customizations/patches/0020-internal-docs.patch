@@ -223,13 +223,11 @@ new file mode 100644
 diff --git a/web/src/hooks/use-top-nav-links.ts b/web/src/hooks/use-top-nav-links.ts
 --- a/web/src/hooks/use-top-nav-links.ts
 +++ b/web/src/hooks/use-top-nav-links.ts
-@@ -58,6 +58,11 @@ export function useTopNavLinks(): TopNavLink[] {
+@@ -58,6 +58,9 @@ export function useTopNavLinks(): TopNavLink[] {
    // Documentation link (may be external)
 -  const docsLink: string | undefined = status?.docs_link as string | undefined
 -
-+  const forceInternalDocs =
-+    import.meta.env.DEV &&
-+    import.meta.env.VITE_FORCE_INTERNAL_DOCS === 'true'
++  const forceInternalDocs = import.meta.env.DEV
 +  const docsLink: string | undefined = forceInternalDocs
 +    ? undefined
 +    : (status?.docs_link as string | undefined)
