@@ -2,7 +2,7 @@ diff --git a/web/src/features/docs/index.tsx b/web/src/features/docs/index.tsx
 new file mode 100644
 --- /dev/null
 +++ b/web/src/features/docs/index.tsx
-@@ -0,0 +1,185 @@
+@@ -0,0 +1,187 @@
 +/*
 +Copyright (C) 2023-2026 QuantumNous
 +
@@ -92,8 +92,10 @@ new file mode 100644
 +}
 +
 +export function Docs() {
-+  const curlExample = `curl "$${'{'}BASE_URL}/v1/models" \\
-+  -H "Authorization: Bearer $${'{'}API_KEY}"`
++  const curlExample = [
++    'curl "${BASE_URL}/v1/models" \\',
++    '  -H "Authorization: Bearer ${API_KEY}"',
++  ].join('\n')
 +
 +  return (
 +    <PublicLayout>

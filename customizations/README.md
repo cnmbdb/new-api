@@ -31,3 +31,20 @@ Custom behavior is applied only during the GitHub Actions image build.
 Official features already present upstream, including the model marketplace,
 translation protection, and iframe theme/language synchronization, are verified
 but are not duplicated as custom patches.
+
+## Local development
+
+Run the patched frontend from a disposable copy of the current official
+baseline:
+
+```sh
+BUN_BIN=/path/to/bun sh customizations/dev.sh --port 5173
+```
+
+`dev.sh` archives `HEAD` into a temporary directory, overlays the current
+`customizations/` layer, applies and verifies every patch, installs the locked
+frontend dependencies, and starts Rsbuild. The temporary directory is removed
+when the development server exits, so the official baseline stays unchanged.
+
+Set `VITE_REACT_APP_SERVER_URL` when the API is not running on the default
+`http://localhost:3000`.
