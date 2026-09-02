@@ -95,9 +95,9 @@ export function useTopNavLinks(): TopNavLink[] {
     }
   }
 
-  // Chat
-  if (modules?.chat !== false) {
-    links.push({ title: t('Chat'), href: '/chat' })
+  // About
+  if (modules?.about !== false) {
+    links.push({ title: t('About'), href: '/about' })
   }
 
   return links
