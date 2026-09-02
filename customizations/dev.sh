@@ -35,5 +35,16 @@ cp -R "${custom_dir}/." "${dev_dir}/customizations/"
 sh "${dev_dir}/customizations/apply.sh"
 
 cd "${dev_dir}/web"
+VITE_FORCE_INTERNAL_DOCS=${VITE_FORCE_INTERNAL_DOCS:-true}
+export VITE_FORCE_INTERNAL_DOCS
+
+printf 'VITE_FORCE_INTERNAL_DOCS=%s\n' "${VITE_FORCE_INTERNAL_DOCS}" > "${dev_dir}/web/.env.local"
+
+# If VITE_FORCE_INTERNAL_DOCS is "true", post-patch to hardcode forceInternalDocs=true
+if [ "${VITE_FORCE_INTERNAL_DOCS}" = "true" ]; then
+  sed -i '' "s|import.meta.env.VITE_FORCE_INTERNAL_DOCS === 'true'|true|" "${dev_dir}/web/src/hooks/use-top-nav-links.ts"
+fi
+
 "${bun_cmd}" install --frozen-lockfile
 "${bun_cmd}" run dev "$@"
+

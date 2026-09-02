@@ -49,6 +49,8 @@ BUN_BIN=/path/to/bun sh customizations/dev.sh --port 5173
 `customizations/` layer, applies and verifies every patch, installs the locked
 frontend dependencies, and starts Rsbuild. The temporary directory is removed
 when the development server exits, so the official baseline stays unchanged.
+In this development mode, the top navigation uses the patched local `/docs`
+route even when the proxied API currently publishes an external `docs_link`.
 
 Set `VITE_REACT_APP_SERVER_URL` when the API is not running on the default
 `http://localhost:3000`.
