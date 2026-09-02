@@ -46,4 +46,13 @@ require_text common/email_template.go '前往网站'
 require_text common/email_resend.go 'RESEND_TEMPLATE_ID'
 require_text common/email_resend.go 'resendTemplateRequest'
 
+require_file web/public/contact-wechat.jpg
+require_file web/src/features/chat/index.tsx
+require_file web/src/features/chat/__tests__/layout.test.tsx
+require_file web/src/routes/chat/index.tsx
+require_text web/src/routes/chat/index.tsx "createFileRoute('/chat/')"
+require_text web/src/features/chat/index.tsx '<PublicLayout showMainContainer={false}>'
+require_text web/src/features/chat/index.tsx '<Footer />'
+require_text web/src/features/chat/index.tsx "src='/contact-wechat.jpg'"
+
 echo "Maintained custom feature patches are present"

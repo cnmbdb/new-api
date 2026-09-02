@@ -1,0 +1,170 @@
+diff --git a/web/src/features/chat/__tests__/layout.test.tsx b/web/src/features/chat/__tests__/layout.test.tsx
+new file mode 100644
+index 000000000..357fb5cc2
+--- /dev/null
++++ b/web/src/features/chat/__tests__/layout.test.tsx
+@@ -0,0 +1,50 @@
++/*
++Copyright (C) 2023-2026 QuantumNous
++
++This program is free software: you can redistribute it and/or modify
++it under the terms of the GNU Affero General Public License as
++published by the Free Software Foundation, either version 3 of the
++License, or (at your option) any later version.
++
++This program is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++GNU Affero General Public License for more details.
++
++You should have received a copy of the GNU Affero General Public License
++along with this program. If not, see <https://www.gnu.org/licenses/>.
++
++For commercial licensing, please contact support@quantumnous.com
++*/
++import { render, screen } from '@testing-library/react'
++import type { ReactNode } from 'react'
++import { describe, expect, it, vi } from 'vitest'
++
++import { Chat } from '..'
++
++vi.mock('@/components/layout', () => ({
++  PublicLayout: (props: { children: ReactNode }) => (
++    <div data-testid='public-layout'>
++      <header data-testid='public-header' />
++      {props.children}
++    </div>
++  ),
++}))
++
++vi.mock('@/components/layout/components/footer', () => ({
++  Footer: () => <footer data-testid='public-footer' />,
++}))
++
++describe('contact page layout', () => {
++  it('keeps the public header and footer around the centered WeChat QR code', () => {
++    render(<Chat />)
++
++    expect(screen.getByTestId('public-header')).toBeInTheDocument()
++    expect(screen.getByTestId('public-footer')).toBeInTheDocument()
++
++    const qrCode = screen.getByRole('img', { name: 'WeChat' })
++    expect(qrCode).toHaveAttribute('src', '/contact-wechat.jpg')
++    expect(qrCode).toHaveAttribute('width', '592')
++    expect(qrCode).toHaveAttribute('height', '760')
++  })
++})
+diff --git a/web/src/features/chat/index.tsx b/web/src/features/chat/index.tsx
+new file mode 100644
+index 000000000..d1fb38839
+--- /dev/null
++++ b/web/src/features/chat/index.tsx
+@@ -0,0 +1,77 @@
++/*
++Copyright (C) 2023-2026 QuantumNous
++
++This program is free software: you can redistribute it and/or modify
++it under the terms of the GNU Affero General Public License as
++published by the Free Software Foundation, either version 3 of the
++License, or (at your option) any later version.
++
++This program is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++GNU Affero General Public License for more details.
++
++You should have received a copy of the GNU Affero General Public License
++along with this program. If not, see <https://www.gnu.org/licenses/>.
++
++For commercial licensing, please contact support@quantumnous.com
++*/
++import { useTranslation } from 'react-i18next'
++
++import { IconWeChat } from '@/assets/brand-icons'
++import { PublicLayout } from '@/components/layout'
++import { Footer } from '@/components/layout/components/footer'
++
++export function Chat() {
++  const { t } = useTranslation()
++
++  return (
++    <PublicLayout showMainContainer={false}>
++      <div className='relative flex min-h-svh flex-col overflow-hidden'>
++        <div
++          aria-hidden='true'
++          className='bg-primary/8 pointer-events-none absolute top-20 left-1/2 size-[28rem] -translate-x-1/2 rounded-full blur-3xl sm:size-[38rem]'
++        />
++        <div
++          aria-hidden='true'
++          className='bg-muted/50 pointer-events-none absolute inset-x-0 top-[28rem] h-64 -skew-y-6'
++        />
++
++        <main className='relative flex flex-1 items-center justify-center px-4 pt-24 pb-16 sm:px-6 sm:pt-28 sm:pb-20'>
++          <section
++            aria-labelledby='contact-title'
++            className='mx-auto flex w-full max-w-xl flex-col items-center text-center'
++          >
++            <div className='border-border/60 bg-background/70 text-muted-foreground mb-4 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm backdrop-blur-xl'>
++              <IconWeChat className='size-4 text-[#07c160]' aria-hidden='true' />
++              <span>{t('WeChat')}</span>
++            </div>
++
++            <h1
++              id='contact-title'
++              className='text-3xl font-bold tracking-tight sm:text-4xl'
++            >
++              {t('footer.columns.about.links.contact')}
++            </h1>
++            <p className='text-muted-foreground mt-3 text-sm sm:text-base'>
++              {t('Scan QR Code')}
++            </p>
++
++            <div className='border-border/60 bg-card/80 mt-8 w-full max-w-[27rem] rounded-[2rem] border p-2 shadow-[0_24px_80px_-32px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:p-3 dark:bg-white'>
++              <img
++                src='/contact-wechat.jpg'
++                alt={t('WeChat')}
++                width='592'
++                height='760'
++                decoding='async'
++                className='h-auto w-full rounded-[1.45rem] object-contain'
++              />
++            </div>
++          </section>
++        </main>
++
++        <Footer />
++      </div>
++    </PublicLayout>
++  )
++}
+diff --git a/web/src/routes/chat/index.tsx b/web/src/routes/chat/index.tsx
+new file mode 100644
+index 000000000..7610ba916
+--- /dev/null
++++ b/web/src/routes/chat/index.tsx
+@@ -0,0 +1,25 @@
++/*
++Copyright (C) 2023-2026 QuantumNous
++
++This program is free software: you can redistribute it and/or modify
++it under the terms of the GNU Affero General Public License as
++published by the Free Software Foundation, either version 3 of the
++License, or (at your option) any later version.
++
++This program is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++GNU Affero General Public License for more details.
++
++You should have received a copy of the GNU Affero General Public License
++along with this program. If not, see <https://www.gnu.org/licenses/>.
++
++For commercial licensing, please contact support@quantumnous.com
++*/
++import { createFileRoute } from '@tanstack/react-router'
++
++import { Chat } from '@/features/chat'
++
++export const Route = createFileRoute('/chat/')({
++  component: Chat,
++})

@@ -26,5 +26,9 @@ if [ "${found_patch}" = false ]; then
   echo "No source patches required for this official revision"
 fi
 
+install -m 0644 \
+  "${custom_dir}/assets/contact-wechat.jpg" \
+  web/public/contact-wechat.jpg
+
 sh "${custom_dir}/verify-home-iframe.sh"
 sh "${custom_dir}/verify-maintained-features.sh"
