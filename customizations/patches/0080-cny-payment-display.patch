@@ -1,23 +1,3 @@
-diff --git a/controller/topup.go b/controller/topup.go
-index 26c7b94..9a50f0c 100644
---- a/controller/topup.go
-+++ b/controller/topup.go
-@@ -162,7 +162,14 @@ func getPayMoney(amount int64, group string) float64 {
- 	}
- 
- 	dTopupGroupRatio := decimal.NewFromFloat(topupGroupRatio)
--	dPrice := decimal.NewFromFloat(operation_setting.Price)
-+	priceRatio := operation_setting.Price
-+	// When the site displays quota in CNY, payment must use the same
-+	// USD-to-CNY rate that the wallet shows. This keeps the amount sent to
-+	// ePay consistent with the amount confirmed by the user.
-+	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeCNY && operation_setting.USDExchangeRate > 0 {
-+		priceRatio = operation_setting.USDExchangeRate
-+	}
-+	dPrice := decimal.NewFromFloat(priceRatio)
- 	// apply optional preset discount by the original request amount (if configured), default 1.0
- 	discount := 1.0
- 	if ds, ok := operation_setting.GetPaymentSetting().AmountDiscount[int(amount)]; ok {
 diff --git a/controller/topup_quota_limit_test.go b/controller/topup_quota_limit_test.go
 index 710e87a..8b74847 100644
 --- a/controller/topup_quota_limit_test.go
@@ -34,7 +14,7 @@ index 710e87a..8b74847 100644
  	)
  }
  
-+func TestGetPayMoneyUsesCNYDisplayExchangeRate(t *testing.T) {
++func TestGetPayMoneyKeepsConfiguredCNYAmount(t *testing.T) {
 +	oldPrice := operation_setting.Price
 +	oldExchangeRate := operation_setting.USDExchangeRate
 +	oldDisplayType := operation_setting.GetGeneralSetting().QuotaDisplayType
@@ -55,7 +35,7 @@ index 710e87a..8b74847 100644
 +	operation_setting.GetPaymentSetting().AmountDiscount = map[int]float64{}
 +	require.NoError(t, common.UpdateTopupGroupRatioByJSONString(`{"default":1}`))
 +
-+	require.InDelta(t, 35, getPayMoney(5, "default"), 0.000001)
++	require.InDelta(t, 5, getPayMoney(5, "default"), 0.000001)
 +}
 +
  func TestStripeCreditedQuotaIncludesGroupRatio(t *testing.T) {
@@ -175,7 +155,7 @@ index ecf0cd5..1645822 100644
                          >
                            <div className='flex w-full items-center justify-between'>
                              <div className='text-base font-semibold sm:text-lg'>
--                              ${formatNumber(displayValue)}
+-                              {formatNumber(displayValue)}
 +                              ¥{formatNumber(displayValue)}
                              </div>
                              {hasDiscount && (
@@ -235,3 +215,42 @@ index 5a9cb9e..e0d97bd 100644
                    usdExchangeRate={effectiveUsdExchangeRate}
                    onOpenBilling={() => setBillingDialogOpen(true)}
                    creemProducts={topupInfo?.creem_products}
+diff --git a/web/src/features/wallet/index.tsx b/web/src/features/wallet/index.tsx
+index e0d97bd..cny0005 100644
+--- a/web/src/features/wallet/index.tsx
++++ b/web/src/features/wallet/index.tsx
+@@ -87,6 +87,10 @@ export function Wallet(props: WalletProps) {
+-  // Calculate effective exchange rate - when display type is USD, use rate of 1
++  // Calculate effective exchange rate - USD and CNY displays use a 1:1 top-up amount
+   const effectiveUsdExchangeRate = useMemo(() => {
+-    return currency?.quotaDisplayType === 'USD'
+-      ? 1
+-      : currency?.usdExchangeRate || 1
++    if (
++      currency?.quotaDisplayType === 'USD' ||
++      currency?.quotaDisplayType === 'CNY'
++    ) {
++      return 1
++    }
++    return currency?.usdExchangeRate || 1
+   }, [currency?.quotaDisplayType, currency?.usdExchangeRate])
+diff --git a/web/src/features/system-settings/integrations/amount-discount-visual-editor.tsx b/web/src/features/system-settings/integrations/amount-discount-visual-editor.tsx
+index bfa2f64..cny0006 100644
+--- a/web/src/features/system-settings/integrations/amount-discount-visual-editor.tsx
++++ b/web/src/features/system-settings/integrations/amount-discount-visual-editor.tsx
+@@ -152,6 +152,6 @@ export function AmountDiscountVisualEditor({
+                 id: 'amount',
+                 header: t('Recharge Amount'),
+                 cell: (discount) => (
+-                  <span className='font-mono text-sm'>${discount.amount}</span>
++                  <span className='font-mono text-sm'>¥{discount.amount}</span>
+                 ),
+               },
+@@ -202,6 +202,6 @@ export function AmountDiscountVisualEditor({
+                 <div className='mb-3 flex items-start justify-between'>
+                   <div className='flex-1'>
+                     <div className='mb-2 font-mono text-base font-medium'>
+-                      ${discount.amount}
++                      ¥{discount.amount}
+                     </div>
+                     <StatusBadge

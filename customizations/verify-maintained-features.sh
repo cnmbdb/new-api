@@ -33,6 +33,8 @@ if grep -Fq 'Pay {formatCurrency(actualPrice)}' web/src/features/wallet/componen
   echo "The recharge preset still exposes the misleading Pay subtitle" >&2
   exit 1
 fi
+require_text web/src/features/system-settings/integrations/amount-options-visual-editor.tsx '¥{amount}'
+require_text web/src/features/system-settings/integrations/amount-discount-visual-editor.tsx '¥{discount.amount}'
 
 require_text setting/operation_setting/payment_setting_old.go '"name":      "USDT-TRC20"'
 require_text setting/operation_setting/payment_setting_old.go '"icon":      "SiTether"'

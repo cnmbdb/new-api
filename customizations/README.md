@@ -18,8 +18,6 @@ Custom behavior is applied only during the GitHub Actions image build.
 - `0010-footer-script-injector.patch`: execute scripts from trusted administrator Footer HTML.
 - `0020-internal-docs.patch`: restore the internal `/docs` API guide.
 - `0030-liquid-navigation.patch`: restore the translucent liquid dashboard header.
-- `0040-recharge-dollar-prefix.patch`: legacy recharge prefix patch, superseded by
-  `0080-cny-payment-display.patch` after the site switched to CNY display.
 - `0045-usdt-trc20-epay.patch`: replace the default `custom1` ePay method with
   the Railway ePay service's `usdt` type, displayed as `USDT-TRC20` with a
   Tether icon while retaining the existing minimum top-up value.
@@ -36,8 +34,9 @@ Custom behavior is applied only during the GitHub Actions image build.
   WeChat QR image is maintained at `assets/contact-wechat.jpg` and copied into
   the frontend public assets only while customizations are applied.
 - `0080-cny-payment-display.patch`: keep wallet, subscription, and payment
-  displays in CNY, remove the misleading `Pay 5` subtitle, and make ePay
-  recharge amounts use the same CNY exchange rate shown by the wallet.
+  displays in CNY, remove the misleading `Pay 5` subtitle, and treat ePay
+  recharge presets as the configured CNY amounts without an extra exchange-rate
+  multiplier.
 
 Official features already present upstream, including the model marketplace,
 translation protection, and iframe theme/language synchronization, are verified
