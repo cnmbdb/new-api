@@ -28,7 +28,11 @@ require_text web/src/routes/docs/index.tsx "createFileRoute('/docs/')"
 require_text web/src/components/layout/components/header.tsx "'liquid-nav sticky"
 require_text web/src/styles/index.css '.liquid-nav {'
 
-require_text web/src/features/wallet/components/recharge-form-card.tsx '${formatNumber(displayValue)}'
+require_text web/src/features/wallet/components/recharge-form-card.tsx '¥{formatNumber(displayValue)}'
+if grep -Fq 'Pay {formatCurrency(actualPrice)}' web/src/features/wallet/components/recharge-form-card.tsx; then
+  echo "The recharge preset still exposes the misleading Pay subtitle" >&2
+  exit 1
+fi
 
 require_text setting/operation_setting/payment_setting_old.go '"name":      "USDT-TRC20"'
 require_text setting/operation_setting/payment_setting_old.go '"icon":      "SiTether"'

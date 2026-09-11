@@ -1,0 +1,237 @@
+diff --git a/controller/topup.go b/controller/topup.go
+index 26c7b94..9a50f0c 100644
+--- a/controller/topup.go
++++ b/controller/topup.go
+@@ -162,7 +162,14 @@ func getPayMoney(amount int64, group string) float64 {
+ 	}
+ 
+ 	dTopupGroupRatio := decimal.NewFromFloat(topupGroupRatio)
+-	dPrice := decimal.NewFromFloat(operation_setting.Price)
++	priceRatio := operation_setting.Price
++	// When the site displays quota in CNY, payment must use the same
++	// USD-to-CNY rate that the wallet shows. This keeps the amount sent to
++	// ePay consistent with the amount confirmed by the user.
++	if operation_setting.GetQuotaDisplayType() == operation_setting.QuotaDisplayTypeCNY && operation_setting.USDExchangeRate > 0 {
++		priceRatio = operation_setting.USDExchangeRate
++	}
++	dPrice := decimal.NewFromFloat(priceRatio)
+ 	// apply optional preset discount by the original request amount (if configured), default 1.0
+ 	discount := 1.0
+ 	if ds, ok := operation_setting.GetPaymentSetting().AmountDiscount[int(amount)]; ok {
+diff --git a/controller/topup_quota_limit_test.go b/controller/topup_quota_limit_test.go
+index 710e87a..8b74847 100644
+--- a/controller/topup_quota_limit_test.go
++++ b/controller/topup_quota_limit_test.go
+@@ -2,6 +2,7 @@ package controller
+ 
+ import (
+ 	"fmt"
++	"maps"
+ 	"net/http"
+ 	"net/http/httptest"
+ 	"strings"
+@@ -181,6 +182,30 @@ func TestValidateCreditedQuotaRejectsOverflow(t *testing.T) {
+ 	)
+ }
+ 
++func TestGetPayMoneyUsesCNYDisplayExchangeRate(t *testing.T) {
++	oldPrice := operation_setting.Price
++	oldExchangeRate := operation_setting.USDExchangeRate
++	oldDisplayType := operation_setting.GetGeneralSetting().QuotaDisplayType
++	oldDiscounts := make(map[int]float64, len(operation_setting.GetPaymentSetting().AmountDiscount))
++	maps.Copy(oldDiscounts, operation_setting.GetPaymentSetting().AmountDiscount)
++	oldTopupGroupRatio := common.TopupGroupRatio2JSONString()
++	t.Cleanup(func() {
++		operation_setting.Price = oldPrice
++		operation_setting.USDExchangeRate = oldExchangeRate
++		operation_setting.GetGeneralSetting().QuotaDisplayType = oldDisplayType
++		operation_setting.GetPaymentSetting().AmountDiscount = oldDiscounts
++		require.NoError(t, common.UpdateTopupGroupRatioByJSONString(oldTopupGroupRatio))
++	})
++
++	operation_setting.Price = 1
++	operation_setting.USDExchangeRate = 7
++	operation_setting.GetGeneralSetting().QuotaDisplayType = operation_setting.QuotaDisplayTypeCNY
++	operation_setting.GetPaymentSetting().AmountDiscount = map[int]float64{}
++	require.NoError(t, common.UpdateTopupGroupRatioByJSONString(`{"default":1}`))
++
++	require.InDelta(t, 35, getPayMoney(5, "default"), 0.000001)
++}
++
+ func TestStripeCreditedQuotaIncludesGroupRatio(t *testing.T) {
+ 	oldQuotaPerUnit := common.QuotaPerUnit
+ 	oldTopupGroupRatio := common.TopupGroupRatio2JSONString()
+diff --git a/web/src/features/subscriptions/components/dialogs/subscription-purchase-dialog.tsx b/web/src/features/subscriptions/components/dialogs/subscription-purchase-dialog.tsx
+index 230b116..981d28b 100644
+--- a/web/src/features/subscriptions/components/dialogs/subscription-purchase-dialog.tsx
++++ b/web/src/features/subscriptions/components/dialogs/subscription-purchase-dialog.tsx
+@@ -286,7 +286,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
+           <Separator />
+           <div className='flex items-center justify-between'>
+             <span className='text-sm font-medium'>{t('Amount Due')}</span>
+-            <span className='text-primary text-lg font-bold'>${price}</span>
++            <span className='text-primary text-lg font-bold'>¥{price}</span>
+           </div>
+         </div>
+ 
+diff --git a/web/src/features/subscriptions/components/dialogs/user-subscriptions-dialog.tsx b/web/src/features/subscriptions/components/dialogs/user-subscriptions-dialog.tsx
+index 8eaaf2c..dc9e58e 100644
+--- a/web/src/features/subscriptions/components/dialogs/user-subscriptions-dialog.tsx
++++ b/web/src/features/subscriptions/components/dialogs/user-subscriptions-dialog.tsx
+@@ -259,7 +259,7 @@ export function UserSubscriptionsDialog(props: Props) {
+               <Combobox
+                 options={plans.map((p) => ({
+                   value: String(p.plan.id),
+-                  label: `${p.plan.title} ($${Number(p.plan.price_amount || 0).toFixed(2)})`,
++                  label: `${p.plan.title} (¥${Number(p.plan.price_amount || 0).toFixed(2)})`,
+                 }))}
+                 value={selectedPlanId}
+                 onValueChange={(v) => v !== null && setSelectedPlanId(v)}
+diff --git a/web/src/features/subscriptions/components/subscriptions-columns.tsx b/web/src/features/subscriptions/components/subscriptions-columns.tsx
+index a23148b..aacf7dc 100644
+--- a/web/src/features/subscriptions/components/subscriptions-columns.tsx
++++ b/web/src/features/subscriptions/components/subscriptions-columns.tsx
+@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
+ 
+ For commercial licensing, please contact support@quantumnous.com
+ */
+-import { type ColumnDef } from '@tanstack/react-table'
++import type { ColumnDef } from '@tanstack/react-table'
+ import { useMemo } from 'react'
+ import { useTranslation } from 'react-i18next'
+ 
+@@ -69,7 +69,7 @@ export function useSubscriptionsColumns(): ColumnDef<PlanRecord>[] {
+         header: t('Price'),
+         cell: ({ row }) => (
+           <span className='font-semibold text-emerald-600'>
+-            ${Number(row.original.plan.price_amount || 0).toFixed(2)}
++            ¥{Number(row.original.plan.price_amount || 0).toFixed(2)}
+           </span>
+         ),
+         size: 100,
+diff --git a/web/src/features/system-settings/integrations/amount-options-visual-editor.tsx b/web/src/features/system-settings/integrations/amount-options-visual-editor.tsx
+index 12b69c0..293a6d5 100644
+--- a/web/src/features/system-settings/integrations/amount-options-visual-editor.tsx
++++ b/web/src/features/system-settings/integrations/amount-options-visual-editor.tsx
+@@ -112,7 +112,7 @@ export function AmountOptionsVisualEditor({
+                 className='text-base'
+                 copyable={false}
+               >
+-                <span className='font-mono'>${amount}</span>
++                <span className='font-mono'>¥{amount}</span>
+                 <Button
+                   type='button'
+                   variant='ghost'
+@@ -123,7 +123,7 @@ export function AmountOptionsVisualEditor({
+                     handleRemove(amount)
+                   }}
+                   className='hover:bg-muted-foreground/20 size-auto p-0.5'
+-                  aria-label={t('Remove ${{amount}}', { amount })}
++                  aria-label={t('Remove')}
+                 >
+                   <X className='h-3.5 w-3.5' />
+                 </Button>
+diff --git a/web/src/features/wallet/components/dialogs/payment-confirm-dialog.tsx b/web/src/features/wallet/components/dialogs/payment-confirm-dialog.tsx
+index 30fd955..21fb5ce 100644
+--- a/web/src/features/wallet/components/dialogs/payment-confirm-dialog.tsx
++++ b/web/src/features/wallet/components/dialogs/payment-confirm-dialog.tsx
+@@ -101,11 +101,11 @@ export function PaymentConfirmDialog({
+             ) : (
+               <div className='flex items-baseline gap-2'>
+                 <span className='text-2xl font-semibold'>
+-                  {formatCurrency(paymentAmount)}
++                  ¥{formatCurrency(paymentAmount)}
+                 </span>
+                 {hasDiscount && (
+                   <span className='text-muted-foreground text-sm line-through'>
+-                    {formatCurrency(originalAmount)}
++                    ¥{formatCurrency(originalAmount)}
+                   </span>
+                 )}
+               </div>
+@@ -117,7 +117,7 @@ export function PaymentConfirmDialog({
+               <div className='flex items-center justify-between text-sm'>
+                 <span className='text-muted-foreground'>{t('You save')}</span>
+                 <span className='font-semibold text-green-600'>
+-                  {formatCurrency(discountAmount)}
++                  ¥{formatCurrency(discountAmount)}
+                 </span>
+               </div>
+             </div>
+diff --git a/web/src/features/wallet/components/recharge-form-card.tsx b/web/src/features/wallet/components/recharge-form-card.tsx
+index ecf0cd5..1645822 100644
+--- a/web/src/features/wallet/components/recharge-form-card.tsx
++++ b/web/src/features/wallet/components/recharge-form-card.tsx
+@@ -234,8 +234,6 @@ export function RechargeFormCard({
+                         1.0
+                       const {
+                         displayValue,
+-                        actualPrice,
+-                        savedAmount,
+                         hasDiscount,
+                       } = calculatePresetPricing(
+                         preset.value,
+@@ -257,7 +255,7 @@ export function RechargeFormCard({
+                         >
+                           <div className='flex w-full items-center justify-between'>
+                             <div className='text-base font-semibold sm:text-lg'>
+-                              ${formatNumber(displayValue)}
++                              ¥{formatNumber(displayValue)}
+                             </div>
+                             {hasDiscount && (
+                               <div className='text-xs font-medium text-green-600'>
+@@ -265,15 +263,6 @@ export function RechargeFormCard({
+                               </div>
+                             )}
+                           </div>
+-                          <div className='text-muted-foreground mt-1.5 w-full text-xs sm:mt-2'>
+-                            Pay {formatCurrency(actualPrice)}
+-                            {hasDiscount && savedAmount > 0 && (
+-                              <span className='text-green-600'>
+-                                {' '}
+-                                • Save {formatCurrency(savedAmount)}
+-                              </span>
+-                            )}
+-                          </div>
+                         </Button>
+                       )
+                     })}
+@@ -306,7 +295,7 @@ export function RechargeFormCard({
+                       <Skeleton className='h-5 w-16' />
+                     ) : (
+                       <span className='text-sm font-semibold'>
+-                        {formatCurrency(paymentAmount)}
++                        ¥{formatCurrency(paymentAmount)}
+                       </span>
+                     )}
+                   </div>
+diff --git a/web/src/features/wallet/components/subscription-plans-card.tsx b/web/src/features/wallet/components/subscription-plans-card.tsx
+index 91282fd..e93ad1a 100644
+--- a/web/src/features/wallet/components/subscription-plans-card.tsx
++++ b/web/src/features/wallet/components/subscription-plans-card.tsx
+@@ -581,7 +581,7 @@ export function SubscriptionPlansCard({
+ 
+                     <div className='py-2'>
+                       <span className='text-primary text-2xl font-bold'>
+-                        ${price}
++                        ¥{price}
+                       </span>
+                     </div>
+ 
+diff --git a/web/src/features/wallet/index.tsx b/web/src/features/wallet/index.tsx
+index 5a9cb9e..e0d97bd 100644
+--- a/web/src/features/wallet/index.tsx
++++ b/web/src/features/wallet/index.tsx
+@@ -315,7 +315,11 @@ export function Wallet(props: WalletProps) {
+                   redeeming={redeeming}
+                   topupLink={topupInfo?.topup_link}
+                   loading={topupLoading}
+-                  priceRatio={(status?.price as number) || 1}
++                  priceRatio={
++                    currency?.quotaDisplayType === 'CNY'
++                      ? effectiveUsdExchangeRate
++                      : (status?.price as number) || 1
++                  }
+                   usdExchangeRate={effectiveUsdExchangeRate}
+                   onOpenBilling={() => setBillingDialogOpen(true)}
+                   creemProducts={topupInfo?.creem_products}
