@@ -96,12 +96,12 @@ index adf9413ac..3745c9eb5 100644
  		assert.Equal(t, "Verification", payload.Subject)
 -		assert.Equal(t, "<strong>code</strong>", payload.HTML)
 +		assert.Contains(t, payload.HTML, `data-new-api-email-card="true"`)
-+		assert.Contains(t, payload.HTML, `>code</strong>`)
++		assert.Contains(t, payload.HTML, `<strong>code</strong>`)
 +		assert.Nil(t, payload.Template)
  
  		w.WriteHeader(http.StatusOK)
  	}))
-@@ -55,6 +58,45 @@ func TestTrySendEmailWithResendSuccess(t *testing.T) {
+@@ -55,6 +58,44 @@ func TestTrySendEmailWithResendSuccess(t *testing.T) {
  	assert.True(t, handled)
  }
  
@@ -125,8 +125,7 @@ index adf9413ac..3745c9eb5 100644
 +		assert.Equal(t, "邮箱验证码", payload.Template.Variables["SUBJECT"])
 +		assert.Equal(t, "https://suxintoken.com", payload.Template.Variables["SITE_URL"])
 +		assert.Equal(t, "https://cdn.example.com/logo-white.png", payload.Template.Variables["LOGO_URL"])
-+		assert.Contains(t, payload.Template.Variables["CONTENT"], `color:#E43B14`)
-+		assert.Contains(t, payload.Template.Variables["CONTENT"], `>123456</strong>`)
++		assert.Contains(t, payload.Template.Variables["CONTENT"], `<strong>123456</strong>`)
 +		w.WriteHeader(http.StatusOK)
 +	}))
 +	t.Cleanup(server.Close)
@@ -152,7 +151,7 @@ new file mode 100644
 index 000000000..f0ad9442b
 --- /dev/null
 +++ b/common/email_template.go
-@@ -0,0 +1,130 @@
+@@ -0,0 +1,126 @@
 +package common
 +
 +import (
@@ -168,11 +167,6 @@ index 000000000..f0ad9442b
 +)
 +
 +func accentEmailContent(content string) string {
-+	content = strings.ReplaceAll(
-+		content,
-+		"<strong>",
-+		`<strong style="color:#E43B14;font-weight:800;letter-spacing:0.04em;">`,
-+	)
 +	content = strings.ReplaceAll(
 +		content,
 +		"<code>",
@@ -217,6 +211,7 @@ index 000000000..f0ad9442b
 +  <style>
 +    .email-content p { margin: 0 0 16px 0; }
 +    .email-content p:last-child { margin-bottom: 0; }
++    .email-content strong { color:#E43B14;font-weight:800;letter-spacing:0.04em; }
 +    @media only screen and (max-width: 640px) {
 +      .email-shell { padding: 20px 12px !important; }
 +      .email-body { padding: 30px 24px 22px !important; }
@@ -319,7 +314,7 @@ index 000000000..b0a3e3e47
 +	assert.Contains(t, result, `src="https://cdn.example.com/logo-white.png" width="78" height="78"`)
 +	assert.Contains(t, result, `src="https://cdn.example.com/logo-white.png" width="18" height="18"`)
 +	assert.Contains(t, result, `color:#E43B14;font-weight:800`)
-+	assert.Contains(t, result, `>123456</strong>`)
++	assert.Contains(t, result, `<strong>123456</strong>`)
 +	assert.Contains(t, result, `href="https://suxintoken.com/account"`)
 +	assert.Contains(t, result, `前往网站`)
 +}

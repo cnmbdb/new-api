@@ -30,6 +30,10 @@ require_text web/src/styles/index.css '.liquid-nav {'
 
 require_text web/src/features/wallet/components/recharge-form-card.tsx '${formatNumber(displayValue)}'
 
+require_text setting/operation_setting/payment_setting_old.go '"name":      "USDT-TRC20"'
+require_text setting/operation_setting/payment_setting_old.go '"icon":      "SiTether"'
+require_text setting/operation_setting/payment_setting_old.go '"type":      "usdt"'
+
 require_file common/email_resend.go
 require_file common/email_resend_test.go
 require_text common/email.go 'trySendEmailWithResend(subject, receiver, content)'

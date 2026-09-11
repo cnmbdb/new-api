@@ -1,0 +1,16 @@
+diff --git a/setting/operation_setting/payment_setting_old.go b/setting/operation_setting/payment_setting_old.go
+--- a/setting/operation_setting/payment_setting_old.go
++++ b/setting/operation_setting/payment_setting_old.go
+@@ -29,9 +29,9 @@ var PayMethods = []map[string]string{
+ 		"type": "wxpay",
+ 	},
+ 	{
+-		"name":      "自定义1",
+-		"icon":      "LuCreditCard",
+-		"type":      "custom1",
++		"name":      "USDT-TRC20",
++		"icon":      "SiTether",
++		"type":      "usdt",
+ 		"min_topup": "50",
+ 	},
+ }

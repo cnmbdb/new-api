@@ -19,6 +19,9 @@ Custom behavior is applied only during the GitHub Actions image build.
 - `0020-internal-docs.patch`: restore the internal `/docs` API guide.
 - `0030-liquid-navigation.patch`: restore the translucent liquid dashboard header.
 - `0040-recharge-dollar-prefix.patch`: display the dollar prefix on recharge presets.
+- `0045-usdt-trc20-epay.patch`: replace the default `custom1` ePay method with
+  the Railway ePay service's `usdt` type, displayed as `USDT-TRC20` with a
+  Tether icon while retaining the existing minimum top-up value.
 - `0050-resend-email-api.patch`: send email through the Resend HTTPS API when
   `RESEND_API_KEY` and `RESEND_FROM` are configured, with the official SMTP
   implementation retained as the fallback when Resend is not configured.
