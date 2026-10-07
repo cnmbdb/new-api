@@ -1,0 +1,180 @@
+diff --git a/web/src/features/pricing/__tests__/model-cards.test.tsx b/web/src/features/pricing/__tests__/model-cards.test.tsx
+index c188788ce..97cadd5a0 100644
+--- a/web/src/features/pricing/__tests__/model-cards.test.tsx
++++ b/web/src/features/pricing/__tests__/model-cards.test.tsx
+@@ -136,8 +136,10 @@ describe('model cards', () => {
+     expect(onClick).toHaveBeenCalledOnce()
+   })
+ 
+-  it('retains a neutral health strip and missing values when metrics are unavailable', () => {
+-    render(<ModelCard model={pricingModel()} onClick={vi.fn()} />)
++  it('defaults to green without traffic and returns to measured status after traffic', () => {
++    const model = pricingModel()
++    const onClick = vi.fn()
++    const { rerender } = render(<ModelCard model={model} onClick={onClick} />)
+     const metrics = screen.getByLabelText(
+       'Performance metrics for the last 24 hours'
+     )
+@@ -145,11 +147,35 @@ describe('model cards', () => {
+     expect(within(metrics).getByText('—s')).toBeVisible()
+     expect(within(metrics).getByText('—t/s')).toBeVisible()
+     expect(within(metrics).queryByText(/100/)).not.toBeInTheDocument()
+-    expect(
+-      within(metrics).getByRole('img', {
+-        name: 'Recent success-rate samples; gray bars indicate missing data.',
+-      })
+-    ).toBeVisible()
++    const strip = within(metrics).getByRole('img', {
++      name: 'No requests in the last 24 hours; green is the default status.',
++    })
++    expect(strip).toBeVisible()
++    expect(strip.children).toHaveLength(24)
++    for (const bar of strip.children) {
++      expect(bar).toHaveClass('bg-emerald-500')
++    }
++    const currentHour = Math.floor(Date.now() / 1000 / 3600) * 3600
++    rerender(
++      <ModelCard
++        model={model}
++        onClick={onClick}
++        perf={{
++          avg_latency_ms: 1200,
++          avg_tps: 42,
++          success_rate: 0,
++          recent_success_series: [{ ts: currentHour, success_rate: 0 }],
++        }}
++      />
++    )
++    expect(within(metrics).getByText('0.0%')).toBeVisible()
++    expect(within(metrics).getByText('1.20s')).toBeVisible()
++    expect(within(metrics).getByText('42.0t/s')).toBeVisible()
++    expect(strip.lastElementChild).toHaveClass('bg-red-500')
++    expect(strip.firstElementChild).toHaveClass('bg-muted-foreground/15')
++    expect(strip).toHaveAccessibleName(
++      'Recent success-rate samples; gray bars indicate missing data.'
++    )
+     expect(screen.getByText('No description available.')).toBeVisible()
+     expect(screen.getByRole('button', { name: 'Details' })).toBeEnabled()
+   })
+diff --git a/web/src/features/pricing/components/model-perf-badge.tsx b/web/src/features/pricing/components/model-perf-badge.tsx
+index 1b3013443..74219b749 100644
+--- a/web/src/features/pricing/components/model-perf-badge.tsx
++++ b/web/src/features/pricing/components/model-perf-badge.tsx
+@@ -55,8 +55,12 @@ export const ModelPerfBadge = memo(function ModelPerfBadge(
+     Number.isFinite(successRate) &&
+     successRate >= 0 &&
+     successRate <= 100
++  const noTraffic = props.perf == null
++  const statusDescription = noTraffic
++    ? t('No requests in the last 24 hours; green is the default status.')
++    : t('Recent success-rate samples; gray bars indicate missing data.')
+   // Hourly points with timestamps, anchored to the client's current hour.
+-  // Hours without traffic stay gray. Slot 23 is the current, partial hour.
++  // With traffic, unsampled hours stay gray. Slot 23 is the current, partial hour.
+   const statusRates = useMemo(() => {
+     const currentHourStart = Math.floor(Date.now() / 1000 / 3600) * 3600
+     const ratesByHour = new Map<number, number>()
+@@ -90,16 +94,12 @@ export const ModelPerfBadge = memo(function ModelPerfBadge(
+           </dt>
+           <dd
+             role='img'
+-            aria-label={t(
+-              'Recent success-rate samples; gray bars indicate missing data.'
+-            )}
+-            title={t(
+-              'Recent success-rate samples; gray bars indicate missing data.'
+-            )}
++            aria-label={statusDescription}
++            title={statusDescription}
+             className='mt-1 flex h-3 w-24 items-center justify-between'
+           >
+             {STATUS_SLOTS.map((slot) => {
+-              const rate = statusRates[slot]
++              const rate = noTraffic ? 100 : statusRates[slot]
+               return (
+                 <span
+                   key={slot}
+diff --git a/web/src/i18n/locales/en.json b/web/src/i18n/locales/en.json
+index 7e741ba29..ca5be0f86 100644
+--- a/web/src/i18n/locales/en.json
++++ b/web/src/i18n/locales/en.json
+@@ -3492,6 +3492,7 @@
+     "No related models available for this channel type": "No related models available for this channel type",
+     "No release notes provided.": "No release notes provided.",
+     "No Reset": "No Reset",
++    "No requests in the last 24 hours; green is the default status.": "No requests in the last 24 hours; green is the default status.",
+     "No reset credits": "No reset credits",
+     "No reset credits available": "No reset credits available",
+     "No restriction": "No restriction",
+diff --git a/web/src/i18n/locales/fr.json b/web/src/i18n/locales/fr.json
+index 8c0776e2a..abf928645 100644
+--- a/web/src/i18n/locales/fr.json
++++ b/web/src/i18n/locales/fr.json
+@@ -3492,6 +3492,7 @@
+     "No related models available for this channel type": "Aucun modèle associé disponible pour ce type de canal",
+     "No release notes provided.": "Aucune note de version fournie.",
+     "No Reset": "Pas de réinitialisation",
++    "No requests in the last 24 hours; green is the default status.": "Aucune requête au cours des dernières 24 heures ; le vert est le statut par défaut.",
+     "No reset credits": "Aucun crédit de réinitialisation",
+     "No reset credits available": "Aucun crédit de réinitialisation disponible",
+     "No restriction": "Aucune restriction",
+diff --git a/web/src/i18n/locales/ja.json b/web/src/i18n/locales/ja.json
+index ecabd4fed..9597ed3d0 100644
+--- a/web/src/i18n/locales/ja.json
++++ b/web/src/i18n/locales/ja.json
+@@ -3492,6 +3492,7 @@
+     "No related models available for this channel type": "このチャネルタイプに関連するモデルが利用できません",
+     "No release notes provided.": "リリースノートは提供されていません。",
+     "No Reset": "リセットなし",
++    "No requests in the last 24 hours; green is the default status.": "過去24時間にリクエストがないため、デフォルトで緑色を表示します。",
+     "No reset credits": "リセット回数はありません",
+     "No reset credits available": "利用可能なリセット回数がありません",
+     "No restriction": "制限なし",
+diff --git a/web/src/i18n/locales/ru.json b/web/src/i18n/locales/ru.json
+index df74c9000..7909f2b89 100644
+--- a/web/src/i18n/locales/ru.json
++++ b/web/src/i18n/locales/ru.json
+@@ -3492,6 +3492,7 @@
+     "No related models available for this channel type": "Для этого типа канала нет доступных связанных моделей",
+     "No release notes provided.": "Примечания к выпуску не предоставлены.",
+     "No Reset": "Без сброса",
++    "No requests in the last 24 hours; green is the default status.": "За последние 24 часа запросов не было; по умолчанию статус зелёный.",
+     "No reset credits": "Нет сбросов лимита",
+     "No reset credits available": "Нет доступных сбросов",
+     "No restriction": "Без ограничений",
+diff --git a/web/src/i18n/locales/vi.json b/web/src/i18n/locales/vi.json
+index 95e073212..a20a2b627 100644
+--- a/web/src/i18n/locales/vi.json
++++ b/web/src/i18n/locales/vi.json
+@@ -3492,6 +3492,7 @@
+     "No related models available for this channel type": "Không có mô hình liên quan nào cho loại kênh này",
+     "No release notes provided.": "Không có ghi chú phát hành nào được cung cấp.",
+     "No Reset": "Không đặt lại",
++    "No requests in the last 24 hours; green is the default status.": "Không có yêu cầu trong 24 giờ qua; màu xanh là trạng thái mặc định.",
+     "No reset credits": "Không có lượt đặt lại",
+     "No reset credits available": "Không có lượt đặt lại khả dụng",
+     "No restriction": "Không giới hạn",
+diff --git a/web/src/i18n/locales/zh-TW.json b/web/src/i18n/locales/zh-TW.json
+index d0a9d8eea..3f83a21e3 100644
+--- a/web/src/i18n/locales/zh-TW.json
++++ b/web/src/i18n/locales/zh-TW.json
+@@ -3492,6 +3492,7 @@
+     "No related models available for this channel type": "此渠道類型沒有相關模型可用",
+     "No release notes provided.": "未提供發佈說明。",
+     "No Reset": "不重置",
++    "No requests in the last 24 hours; green is the default status.": "最近 24 小時無請求，預設顯示綠色狀態。",
+     "No reset credits": "暫無重置次數",
+     "No reset credits available": "沒有可用重置次數",
+     "No restriction": "無限制",
+diff --git a/web/src/i18n/locales/zh.json b/web/src/i18n/locales/zh.json
+index 099aa85eb..56aa2b103 100644
+--- a/web/src/i18n/locales/zh.json
++++ b/web/src/i18n/locales/zh.json
+@@ -3492,6 +3492,7 @@
+     "No related models available for this channel type": "此渠道类型没有相关模型可用",
+     "No release notes provided.": "未提供发布说明。",
+     "No Reset": "不重置",
++    "No requests in the last 24 hours; green is the default status.": "最近 24 小时无请求，默认显示绿色状态。",
+     "No reset credits": "暂无重置次数",
+     "No reset credits available": "没有可用重置次数",
+     "No restriction": "无限制",
